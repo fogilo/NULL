@@ -1,7 +1,8 @@
 New repository after the last one was taken down.
 
-# Raven B++
-Raven b++ is a pvp and utility mod for minecraft 1.8.x. It supports Forge and Feather adding quality of life improvements, bug fixes, and so much more.<br>
+# Raven Edition
+Raven b++ is a pvp and utility mod for minecraft 1.8.x. It supports Forge and Feather adding quality of life improvements, bug fixes, and so much more
+This edition extends off the legacy version with new features added with Ai. Specifically Claude Opus 4.6. I do not claim credit for any of the new features or the legacy build from the orginal versions of raven.<br>
 
 Offical Discord of Raven b++:
 [https://discord.gg/UqJ8ngteud](https://discord.gg/UqJ8ngteud)
