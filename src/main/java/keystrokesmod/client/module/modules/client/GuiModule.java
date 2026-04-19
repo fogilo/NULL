@@ -43,11 +43,11 @@ public class GuiModule extends Module {
 
     @Override
     public void onEnable() {
-        if (Utils.Player.isPlayerInGame() && mc.currentScreen != Raven.appleGui) {
+        if (Utils.Player.isPlayerInGame() && mc.currentScreen != Raven.nullGui) {
             guiScale = mc.gameSettings.guiScale;
             mc.gameSettings.guiScale = 3;
-            mc.displayGuiScreen(Raven.appleGui);
-            Raven.appleGui.initGui();
+            mc.displayGuiScreen(Raven.nullGui);
+            Raven.nullGui.initGui();
         }
         this.disable();
     }

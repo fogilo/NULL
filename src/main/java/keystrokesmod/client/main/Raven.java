@@ -9,6 +9,7 @@ import com.google.common.eventbus.EventBus;
 
 import keystrokesmod.client.clickgui.apple.AppleClickGui;
 import keystrokesmod.client.clickgui.kv.KvCompactGui;
+import keystrokesmod.client.clickgui.nullgui.NullClickGui;
 import keystrokesmod.client.clickgui.raven.ClickGui;
 import keystrokesmod.client.command.CommandManager;
 import keystrokesmod.client.config.ConfigManager;
@@ -93,6 +94,7 @@ public class Raven {
     public static ClickGui clickGui;
     public static KvCompactGui kvCompactGui;
     public static AppleClickGui appleGui;
+    public static NullClickGui nullGui;
     // public static TabGui tabGui;
 
     private static final ScheduledExecutorService ex = Executors.newScheduledThreadPool(2);
@@ -127,6 +129,7 @@ public class Raven {
         clickGui = new ClickGui();
         kvCompactGui = new KvCompactGui();
         appleGui = new AppleClickGui();
+        nullGui = new NullClickGui();
         configManager = new ConfigManager();
         clientConfig = new ClientConfig();
         clientConfig.applyConfig();

@@ -24,6 +24,11 @@ public class FontUtil {
     public static FontRenderer poppinsMedium;  // 13px plain  — setting labels
     public static FontRenderer poppinsRegular; // 11px plain  — values / descriptions
 
+    // NULL Client GUI fonts — Space Grotesk for branding/headlines
+    public static FontRenderer nullTitle;       // Space Grotesk Bold 18px — "NULL Client" branding
+    public static FontRenderer nullCategory;    // Space Grotesk Bold 13px — category names
+    public static FontRenderer nullBody;        // Poppins 10px — small setting text
+
     private static Font normal_;
     private static Font two_;
     private static Font small_;
@@ -34,6 +39,10 @@ public class FontUtil {
     private static Font poppinsBold_;
     private static Font poppinsMedium_;
     private static Font poppinsRegular_;
+
+    private static Font nullTitle_;
+    private static Font nullCategory_;
+    private static Font nullBody_;
 
     private static Font getFont(Map<String, Font> locationMap, String location, int size, int fonttype) {
         Font font = null;
@@ -74,6 +83,10 @@ public class FontUtil {
             poppinsBold_    = getFont(locationMap, "Poppins.ttf", 14, Font.BOLD);
             poppinsMedium_  = getFont(locationMap, "Poppins.ttf", 13, Font.PLAIN);
             poppinsRegular_ = getFont(locationMap, "Poppins.ttf", 11, Font.PLAIN);
+            // NULL Client GUI — Space Grotesk for branding
+            nullTitle_      = getFont(locationMap, "SpaceGrotesk-Bold.ttf", 18, Font.BOLD);
+            nullCategory_   = getFont(locationMap, "SpaceGrotesk-Bold.ttf", 13, Font.BOLD);
+            nullBody_       = getFont(locationMap, "Poppins.ttf", 10, Font.PLAIN);
             completed++;
         }).start();
         new Thread(() -> {
@@ -103,5 +116,9 @@ public class FontUtil {
         poppinsBold    = new FontRenderer(poppinsBold_,    true, true);
         poppinsMedium  = new FontRenderer(poppinsMedium_,  true, true);
         poppinsRegular = new FontRenderer(poppinsRegular_, true, true);
+
+        nullTitle      = new FontRenderer(nullTitle_,      true, true);
+        nullCategory   = new FontRenderer(nullCategory_,   true, true);
+        nullBody       = new FontRenderer(nullBody_,       true, true);
     }
 }
