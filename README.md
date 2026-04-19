@@ -23,3 +23,4 @@ This edition extends off the legacy version with new features added with Ai. Spe
 2. Download and clone repo to a folder.
 3. Open terminal/command prompt and type ./gradlew build
 4. Find the build in builds/libs in the direcotry you cloned this to.
+# NULL
