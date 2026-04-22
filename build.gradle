@@ -71,20 +71,13 @@ configurations {
 
 dependencies {
     implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
-    embed(fileTree(dir: "libs", include: "discord-rpc.jar"))
+    embed(fileTree(dir: "libs", include: "*.jar"))
 
-    embed('org.spongepowered:mixin:0.6-SNAPSHOT') {
-
-        // Excludes unneeded stuff.
-        exclude module: 'gson'
-        exclude module: 'guava'
-        exclude module: 'jarjar'
-        exclude module: 'commons-codec'
-        exclude module: 'commons-io'
-        exclude module: 'launchwrapper'
-        exclude module: 'asm-commons'
-        exclude module: 'slf4j-api'
-    }
+    embed 'org.ow2.asm:asm-commons:9.2'
+    embed 'org.ow2.asm:asm-tree:9.2'
+    embed 'org.ow2.asm:asm-util:9.2'
+    embed 'com.google.guava:guava:31.1-jre'
+    
     implementation 'org.jetbrains:annotations:22.0.0'
 }
 
@@ -121,7 +114,12 @@ jar {
                 'LICENSE.txt',
                 'META-INF/MUMFREY.RSA',
                 'META-INF/maven/**',
-                'org/**/*.html'
+                'org/**/*.html',
+                'module-info.class',
+                'META-INF/versions/**',
+                'org/spongepowered/asm/launch/platform/container/ContainerHandleModLauncherEx*.class',
+                'org/spongepowered/asm/launch/MixinTransformationService.class',
+                'org/spongepowered/asm/launch/MixinLaunchPlugin.class'
     }
     manifest {
         attributes(

@@ -6,8 +6,8 @@ import keystrokesmod.client.utils.RenderUtils;
 import keystrokesmod.client.utils.font.FontUtil;
 
 /**
- * Neon-violet slider for numeric settings.
- * Shows "Name: value" label above a rounded track with violet fill.
+ * Redesigned slider with uppercase label, value pill, and thick rounded track.
+ * Matches the reference design: "CPS TARGET" style labels with purple fill.
  */
 public class NSlider extends NSettingComponent {
 
@@ -21,44 +21,64 @@ public class NSlider extends NSettingComponent {
     @Override
     public void draw(int mouseX, int mouseY) {
         if (dragging) {
-            float percent = (mouseX - x) / (float) width;
+            float percent = (mouseX - x) / (float) (width - 60); // account for value pill width
             percent = Math.max(0f, Math.min(1f, percent));
             float value = (float) (setting.getMin() + percent * (setting.getMax() - setting.getMin()));
             setting.setValue(value);
         }
 
-        // Label: "Name: value"
-        String label = setting.getName() + ": " + setting.getInput();
-        FontUtil.poppinsRegular.drawSmoothString(label, x, y, NullTheme.TEXT_LABEL);
+        int trackWidth = width - 60; // reserve space for value pill
 
-        // Track
-        int trackY = y + (int) FontUtil.poppinsRegular.getHeight() + 2;
+        // ── Label: UPPERCASE name ──
+        String label = setting.getName().toUpperCase();
+        FontUtil.poppinsBold.drawSmoothString(label, x, y, NullTheme.TEXT_LABEL);
+
+        // ── Value pill on the right ──
+        String valueStr = String.valueOf(setting.getInput());
+        float valueTextW = (float) FontUtil.poppinsBold.getStringWidth(valueStr);
+        int pillW = Math.max(36, (int) valueTextW + 14);
+        int pillX = x + width - pillW;
+        int pillY = y - 2;
+        int pillH = (int) FontUtil.poppinsBold.getHeight() + 4;
+        RenderUtils.drawRoundedRect(pillX, pillY, pillX + pillW, pillY + pillH, pillH / 2f, NullTheme.SLIDER_VALUE_PILL_BG);
+        RenderUtils.drawRoundedOutline(pillX, pillY, pillX + pillW, pillY + pillH, pillH / 2f, 1, NullTheme.GHOST_BORDER);
+        FontUtil.poppinsBold.drawSmoothString(valueStr,
+                pillX + (pillW - valueTextW) / 2f,
+                pillY + (pillH - FontUtil.poppinsBold.getHeight()) / 2f, NullTheme.SLIDER_VALUE_PILL_TEXT);
+
+        // ── Track ──
+        int trackY = y + (int) FontUtil.poppinsBold.getHeight() + 6;
         int trackH = 6;
-        RenderUtils.drawRoundedRect(x, trackY, x + width, trackY + trackH, 3, NullTheme.SLIDER_TRACK);
+        RenderUtils.drawRoundedRect(x, trackY, x + trackWidth, trackY + trackH, 3, NullTheme.SLIDER_TRACK);
 
-        // Fill
+        // ── Fill ──
         float percent = (float) ((setting.getInput() - setting.getMin()) / (setting.getMax() - setting.getMin()));
-        int fillW = (int) (width * percent);
+        int fillW = (int) (trackWidth * percent);
         if (fillW > 0) {
             RenderUtils.drawRoundedRect(x, trackY, x + fillW, trackY + trackH, 3, NullTheme.SLIDER_FILL);
         }
 
-        // Knob
-        int knobR = 4;
+        // ── Knob ──
+        int knobR = 5;
         int knobX = x + fillW;
-        int knobY = trackY + trackH / 2;
-        RenderUtils.drawRoundedRect(knobX - knobR, knobY - knobR, knobX + knobR, knobY + knobR, knobR, NullTheme.SLIDER_KNOB);
+        int knobCY = trackY + trackH / 2;
+        // Glow
+        RenderUtils.drawRoundedRect(knobX - knobR - 3, knobCY - knobR - 3, knobX + knobR + 3, knobCY + knobR + 3,
+                knobR + 3, NullTheme.ACCENT_GLOW_SOFT);
+        // Solid knob
+        RenderUtils.drawRoundedRect(knobX - knobR, knobCY - knobR, knobX + knobR, knobCY + knobR, knobR, NullTheme.SLIDER_KNOB);
     }
 
     @Override
     public int getHeight() {
-        return (int) FontUtil.poppinsRegular.getHeight() + 2 + 6 + 4;
+        return (int) FontUtil.poppinsBold.getHeight() + 6 + 6 + 8;
     }
 
     @Override
     public boolean mouseDown(int mouseX, int mouseY, int button) {
-        int trackY = y + (int) FontUtil.poppinsRegular.getHeight() + 2;
-        if (mouseX >= x && mouseX <= x + width && mouseY >= trackY - 4 && mouseY <= trackY + 10) {
+        int trackY = y + (int) FontUtil.poppinsBold.getHeight() + 6;
+        int trackWidth = width - 60;
+        if (mouseX >= x && mouseX <= x + trackWidth && mouseY >= trackY - 6 && mouseY <= trackY + 12) {
             dragging = true;
             return true;
         }

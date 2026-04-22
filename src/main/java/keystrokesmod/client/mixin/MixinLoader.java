@@ -13,7 +13,7 @@ import java.util.Map;
 public class MixinLoader implements IFMLLoadingPlugin {
     public MixinLoader() {
         MixinBootstrap.init();
-        Mixins.addConfiguration("mixins.keystrokesmod.json");
+        Mixins.addConfiguration("mixins.raindots.json");
         MixinEnvironment.getDefaultEnvironment().setSide(MixinEnvironment.Side.CLIENT);
     }
 

@@ -26,8 +26,10 @@ import net.minecraft.client.gui.Gui;
 /**
  * A single module row/card in the NULL Client GUI.
  *
- * Collapsed: uniform CARD_HEIGHT, shows name + toggle + arrow
- * Expanded (right-click): smoothly reveals settings area below the header
+ * Features:
+ * - Hover glow effect (subtle purple aura, no size change)
+ * - Favorite star icon (★ filled pink when active, ☆ outline when inactive)
+ * - Toggle switch + chevron for settings expansion
  */
 public class NullModuleRow {
 
@@ -43,6 +45,9 @@ public class NullModuleRow {
     private final CoolDown expandAnim = new CoolDown(NullTheme.ANIM_EXPAND);
     private int prevSettingsH = 0;
     private int targetSettingsH = 0;
+
+    // Star icon dimensions
+    private static final int STAR_SIZE = 14;
 
     public NullModuleRow(Module mod) {
         this.mod = mod;
@@ -70,6 +75,18 @@ public class NullModuleRow {
         this.width = width;
     }
 
+    public boolean isFavorited() {
+        return NullClickGui.favorites.contains(mod.getName());
+    }
+
+    public void toggleFavorite() {
+        if (isFavorited()) {
+            NullClickGui.favorites.remove(mod.getName());
+        } else {
+            NullClickGui.favorites.add(mod.getName());
+        }
+    }
+
     // ────────────────────────────────────────────────────────────
     //  DRAWING
     // ────────────────────────────────────────────────────────────
@@ -77,48 +94,86 @@ public class NullModuleRow {
     public void draw(int mx, int my) {
         int cardH = getTotalHeight() - NullTheme.CARD_GAP;
 
-        // ── Card background ──
         boolean hoverHeader = mx >= x && mx <= x + width && my >= y && my <= y + NullTheme.CARD_HEIGHT;
+
+        // ── Hover glow — subtle purple aura behind the card ──
+        if (hoverHeader && !expanded) {
+            RenderUtils.drawRoundedRect(x - 2, y - 2, x + width + 2, y + cardH + 2,
+                    NullTheme.CARD_RADIUS + 2, NullTheme.HOVER_GLOW);
+        }
+
+        // ── Card background ──
         int bgColor = hoverHeader ? NullTheme.CARD_HOVER : NullTheme.CARD_BG;
         if (expanded) bgColor = NullTheme.CARD_EXPANDED;
         RenderUtils.drawRoundedRect(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, bgColor);
 
-        // ── Accent bar on left when enabled ──
+        // Ghost Border for the card when hovered or expanded
+        if (hoverHeader || expanded) {
+            RenderUtils.drawRoundedOutline(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, 1,
+                    expanded ? NullTheme.GHOST_BORDER_STRONG : NullTheme.GHOST_BORDER);
+        }
+
+        // ── Accent bar on left when enabled — 3px wide with glow ──
         if (mod.isEnabled()) {
-            RenderUtils.drawRoundedRect(x, y + 4, x + 3, y + NullTheme.CARD_HEIGHT - 4, 2, NullTheme.ACCENT);
+            int barTop = y + 8;
+            int barBot = y + NullTheme.CARD_HEIGHT - 8;
+            RenderUtils.drawRoundedRect(x - 1, barTop - 1, x + 4, barBot + 1, 2, NullTheme.ACCENT_GLOW_SOFT);
+            RenderUtils.drawRoundedRect(x, barTop, x + 3, barBot, 2, NullTheme.ACCENT);
         }
 
         // ── Module name ──
         int nameColor = mod.isEnabled() ? NullTheme.TEXT_ENABLED : NullTheme.TEXT_DISABLED;
         float nameY = y + (NullTheme.CARD_HEIGHT - FontUtil.poppinsBold.getHeight()) / 2f;
-        FontUtil.poppinsBold.drawSmoothString(mod.getName(), x + 10, nameY, nameColor);
+        FontUtil.poppinsBold.drawSmoothString(mod.getName(), x + 16, nameY, nameColor);
 
-        // ── Toggle switch ──
+        // ── Module description (inline, after name) ──
+        float nameW = (float) FontUtil.poppinsBold.getStringWidth(mod.getName());
+        String desc = mod.getDescription();
+        if (desc != null && !desc.isEmpty()) {
+            // Truncate description if it's too long to fit
+            int maxDescW = width - (int) nameW - 140; // reserve space for toggle + star + chevron
+            String truncDesc = desc;
+            if (FontUtil.poppinsRegular.getStringWidth(desc) > maxDescW && maxDescW > 20) {
+                while (FontUtil.poppinsRegular.getStringWidth(truncDesc + "...") > maxDescW && truncDesc.length() > 5) {
+                    truncDesc = truncDesc.substring(0, truncDesc.length() - 1);
+                }
+                truncDesc += "...";
+            }
+            FontUtil.poppinsRegular.drawSmoothString(truncDesc,
+                    x + 16 + nameW + 8, nameY + 2, NullTheme.TEXT_DESCRIPTION);
+        }
+
+        // ── Right-side controls (from right to left): Chevron → Star → Toggle ──
+
+        // 1. Chevron (expand/collapse)
+        drawChevron(mx, my);
+
+        // 2. Favorite star
+        drawStar(mx, my);
+
+        // 3. Toggle switch
         drawToggle();
-
-        // ── Arrow icon ──
-        drawArrow(mx, my);
 
         // ── Expanded settings area ──
         if (expanded || getAnimPercent() < 1f) {
-            // Separator line
             float animP = getAnimPercent();
+            // Separator line between header and settings
             if (animP > 0.1f) {
                 int sepAlpha = (int) (animP * 0x30);
-                int sepColor = (sepAlpha << 24) | 0xCC97FF;
-                Gui.drawRect(x + 8, y + NullTheme.CARD_HEIGHT, x + width - 8,
+                int sepColor = (sepAlpha << 24) | 0x484849;
+                Gui.drawRect(x + 14, y + NullTheme.CARD_HEIGHT, x + width - 14,
                         y + NullTheme.CARD_HEIGHT + 1, sepColor);
             }
 
-            int settingY = y + NullTheme.CARD_HEIGHT + 6;
+            int settingY = y + NullTheme.CARD_HEIGHT + 8;
             for (NSettingComponent comp : settings) {
                 if (!comp.visable) continue;
-                comp.setPosition(x + 14, settingY, width - 28);
+                comp.setPosition(x + 16, settingY, width - 32);
                 comp.draw(mx, my);
-                settingY += comp.getHeight() + 4;
+                settingY += comp.getHeight() + 5;
             }
             if (bindRow != null) {
-                bindRow.setPosition(x + 14, settingY, width - 28);
+                bindRow.setPosition(x + 16, settingY, width - 32);
                 bindRow.draw(mx, my);
             }
         }
@@ -128,7 +183,8 @@ public class NullModuleRow {
         int tw = NullTheme.TOGGLE_W;
         int th = NullTheme.TOGGLE_H;
         int knob = NullTheme.TOGGLE_KNOB_SIZE;
-        int tx = x + width - 40 - tw;
+        // Position: left of star
+        int tx = x + width - 66;
         int ty = y + (NullTheme.CARD_HEIGHT - th) / 2;
 
         float percent = Utils.Client.smoothPercent(
@@ -140,9 +196,11 @@ public class NullModuleRow {
         RenderUtils.drawRoundedRect(tx, ty, tx + tw, ty + th, th / 2f, trackColor);
 
         // Glow effect when on
-        if (percent > 0.5f) {
+        if (percent > 0.3f) {
+            int glowAlpha = (int) (percent * 0x28);
+            int glowColor = (glowAlpha << 24) | (NullTheme.ACCENT & 0x00FFFFFF);
             RenderUtils.drawRoundedRect(tx - 2, ty - 2, tx + tw + 2, ty + th + 2,
-                    (th + 4) / 2f, NullTheme.ACCENT_GLOW_SOFT);
+                    (th + 4) / 2f, glowColor);
         }
 
         // Knob
@@ -151,16 +209,98 @@ public class NullModuleRow {
         RenderUtils.drawRoundedRect(knobX, knobY, knobX + knob, knobY + knob, knob / 2f, NullTheme.TOGGLE_KNOB);
     }
 
-    private void drawArrow(int mx, int my) {
-        int arrowAreaX = x + width - 30;
+    private void drawStar(int mx, int my) {
+        boolean fav = isFavorited();
+
+        // Position star between toggle and chevron
+        int starX = x + width - 38;
+        int starY = y + (NullTheme.CARD_HEIGHT) / 2;
+
+        boolean hoverStar = mx >= starX - 8 && mx <= starX + 8
+                && my >= starY - 8 && my <= starY + 8;
+
+        int starColor;
+        if (fav) {
+            starColor = hoverStar ? NullTheme.STAR_HOVER : NullTheme.STAR_ACTIVE;
+        } else {
+            starColor = hoverStar ? NullTheme.STAR_HOVER : NullTheme.STAR_INACTIVE;
+        }
+
+        org.lwjgl.opengl.GL11.glPushMatrix();
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_LINE_SMOOTH);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_CULL_FACE); // Disable culling for complex polygons
+        
+        float f3 = (float)(starColor >> 24 & 255) / 255.0F;
+        float f = (float)(starColor >> 16 & 255) / 255.0F;
+        float f1 = (float)(starColor >> 8 & 255) / 255.0F;
+        float f2 = (float)(starColor & 255) / 255.0F;
+        org.lwjgl.opengl.GL11.glColor4f(f, f1, f2, f3);
+
+        // Draw 5-point star
+        int r = 6; // slightly bigger
+        if (fav) {
+            org.lwjgl.opengl.GL11.glBegin(org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN);
+            org.lwjgl.opengl.GL11.glVertex2d(starX, starY); // True center
+            for (int i = 0; i <= 10; i++) {
+                double angle = i * Math.PI / 5.0 - Math.PI / 2.0;
+                double radius = (i % 2 == 0) ? r : r / 2.2;
+                org.lwjgl.opengl.GL11.glVertex2d(starX + Math.cos(angle) * radius, starY + Math.sin(angle) * radius);
+            }
+            org.lwjgl.opengl.GL11.glEnd();
+        } else {
+            org.lwjgl.opengl.GL11.glLineWidth(1.5f);
+            org.lwjgl.opengl.GL11.glBegin(org.lwjgl.opengl.GL11.GL_LINE_LOOP);
+            for (int i = 0; i < 10; i++) {
+                double angle = i * Math.PI / 5.0 - Math.PI / 2.0;
+                double radius = (i % 2 == 0) ? r : r / 2.2;
+                org.lwjgl.opengl.GL11.glVertex2d(starX + Math.cos(angle) * radius, starY + Math.sin(angle) * radius);
+            }
+            org.lwjgl.opengl.GL11.glEnd();
+        }
+
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_CULL_FACE);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glPopMatrix();
+    }
+
+    private void drawChevron(int mx, int my) {
+        int arrowAreaX = x + width - 20;
         int arrowAreaW = 20;
         boolean hoverArrow = mx >= arrowAreaX && mx <= arrowAreaX + arrowAreaW
                 && my >= y && my <= y + NullTheme.CARD_HEIGHT;
 
         int arrowColor = hoverArrow ? NullTheme.ACCENT : NullTheme.TEXT_SECONDARY;
-        String arrow = expanded ? "\u25B2" : "\u25BC"; // ▲ or ▼
-        float arrowY = y + (NullTheme.CARD_HEIGHT - FontUtil.poppinsRegular.getHeight()) / 2f;
-        FontUtil.poppinsRegular.drawSmoothString(arrow, arrowAreaX + 4, arrowY, arrowColor);
+        int cx = arrowAreaX + arrowAreaW / 2;
+        int cy = y + NullTheme.CARD_HEIGHT / 2;
+
+        org.lwjgl.opengl.GL11.glPushMatrix();
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_LINE_SMOOTH);
+        org.lwjgl.opengl.GL11.glLineWidth(2.0f);
+        
+        float af3 = (float)(arrowColor >> 24 & 255) / 255.0F;
+        float af = (float)(arrowColor >> 16 & 255) / 255.0F;
+        float af1 = (float)(arrowColor >> 8 & 255) / 255.0F;
+        float af2 = (float)(arrowColor & 255) / 255.0F;
+        org.lwjgl.opengl.GL11.glColor4f(af, af1, af2, af3);
+        
+        org.lwjgl.opengl.GL11.glBegin(org.lwjgl.opengl.GL11.GL_LINE_STRIP);
+        if (expanded) {
+            org.lwjgl.opengl.GL11.glVertex2d(cx - 3, cy + 1);
+            org.lwjgl.opengl.GL11.glVertex2d(cx, cy - 2);
+            org.lwjgl.opengl.GL11.glVertex2d(cx + 3, cy + 1);
+        } else {
+            org.lwjgl.opengl.GL11.glVertex2d(cx - 3, cy - 1);
+            org.lwjgl.opengl.GL11.glVertex2d(cx, cy + 2);
+            org.lwjgl.opengl.GL11.glVertex2d(cx + 3, cy - 1);
+        }
+        org.lwjgl.opengl.GL11.glEnd();
+        
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glPopMatrix();
     }
 
     // ────────────────────────────────────────────────────────────
@@ -196,12 +336,12 @@ public class NullModuleRow {
     }
 
     private int computeSettingsHeight() {
-        int h = 6; // top padding
+        int h = 8; // top padding
         for (NSettingComponent c : settings) {
-            if (c.visable) h += c.getHeight() + 4;
+            if (c.visable) h += c.getHeight() + 5;
         }
-        if (bindRow != null) h += bindRow.getHeight() + 4;
-        h += 4; // bottom padding
+        if (bindRow != null) h += bindRow.getHeight() + 5;
+        h += 6; // bottom padding
         return h;
     }
 
@@ -221,38 +361,39 @@ public class NullModuleRow {
 
         // Header area interactions
         if (my >= y && my <= y + NullTheme.CARD_HEIGHT) {
-            // Toggle switch click (left-click)
+
+            // ── Star click (left-click) ──
+            int starX = x + width - 38;
+            int starY = y + (NullTheme.CARD_HEIGHT) / 2;
+            if (button == 0 && mx >= starX - 8 && mx <= starX + 8
+                    && my >= starY - 8 && my <= starY + 8) {
+                toggleFavorite();
+                return true;
+            }
+
+            // ── Toggle switch click (left-click) ──
             int tw = NullTheme.TOGGLE_W;
-            int tx = x + width - 40 - tw;
+            int tx = x + width - 66;
             int ty = y + (NullTheme.CARD_HEIGHT - NullTheme.TOGGLE_H) / 2;
-            if (button == 0 && mx >= tx - 2 && mx <= tx + tw + 2
-                    && my >= ty - 2 && my <= ty + NullTheme.TOGGLE_H + 2) {
+            if (button == 0 && mx >= tx - 4 && mx <= tx + tw + 4
+                    && my >= ty - 4 && my <= ty + NullTheme.TOGGLE_H + 4) {
                 toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
                 toggleAnim.start();
                 mod.toggle();
                 return true;
             }
 
-            // Right-click anywhere on header → expand/collapse
+            // ── Chevron click → expand/collapse ──
+            int arrowAreaX = x + width - 20;
+            if (button == 0 && mx >= arrowAreaX && mx <= arrowAreaX + 20
+                    && (!settings.isEmpty() || bindRow != null)) {
+                toggleExpand();
+                return true;
+            }
+
+            // ── Right-click anywhere on header → expand/collapse ──
             if (button == 1 && (!settings.isEmpty() || bindRow != null)) {
-                expanded = !expanded;
-                expandAnim.setCooldown(NullTheme.ANIM_EXPAND);
-                expandAnim.start();
-                if (expanded) {
-                    prevSettingsH = 0;
-                    targetSettingsH = computeSettingsHeight();
-                } else {
-                    prevSettingsH = computeSettingsHeight();
-                    targetSettingsH = 0;
-                }
-                return true;
-            }
-
-            // Left-click on name area → toggle module
-            if (button == 0) {
-                toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
-                toggleAnim.start();
-                mod.toggle();
+                toggleExpand();
                 return true;
             }
 
@@ -268,6 +409,19 @@ public class NullModuleRow {
         }
 
         return true;
+    }
+
+    private void toggleExpand() {
+        expanded = !expanded;
+        expandAnim.setCooldown(NullTheme.ANIM_EXPAND);
+        expandAnim.start();
+        if (expanded) {
+            prevSettingsH = 0;
+            targetSettingsH = computeSettingsHeight();
+        } else {
+            prevSettingsH = computeSettingsHeight();
+            targetSettingsH = 0;
+        }
     }
 
     public void mouseReleased(int mx, int my, int button) {

@@ -43,11 +43,21 @@ public class GuiModule extends Module {
 
     @Override
     public void onEnable() {
-        if (Utils.Player.isPlayerInGame() && mc.currentScreen != Raven.nullGui) {
-            guiScale = mc.gameSettings.guiScale;
-            mc.gameSettings.guiScale = 3;
-            mc.displayGuiScreen(Raven.nullGui);
-            Raven.nullGui.initGui();
+        if (Utils.Player.isPlayerInGame()) {
+            if (mc.currentScreen == Raven.nullGui) {
+                // Close the GUI
+                mc.displayGuiScreen(null);
+                Raven.configManager.save();
+                if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
+            } else {
+                // Open the GUI — store bound key for debounce
+                guiScale = mc.gameSettings.guiScale;
+                mc.gameSettings.guiScale = 3;
+                Raven.nullGui.boundKey = this.keycode;
+                Raven.nullGui.boundKeyReleased = false;
+                mc.displayGuiScreen(Raven.nullGui);
+                Raven.nullGui.initGui();
+            }
         }
         this.disable();
     }

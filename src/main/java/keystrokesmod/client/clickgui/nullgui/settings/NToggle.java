@@ -9,8 +9,8 @@ import keystrokesmod.client.utils.Utils;
 import keystrokesmod.client.utils.font.FontUtil;
 
 /**
- * Pill-shaped toggle switch for boolean (tick) settings.
- * Matches the module-level toggle style but rendered inline as a setting.
+ * Checkbox-style toggle for boolean (tick) settings.
+ * Matches reference design: 14×14 rounded square, filled purple when checked.
  */
 public class NToggle extends NSettingComponent {
 
@@ -18,9 +18,8 @@ public class NToggle extends NSettingComponent {
     private final Module mod;
     private final CoolDown anim = new CoolDown(NullTheme.ANIM_TOGGLE);
 
-    private static final int SW = 20; // switch width
-    private static final int SH = 10; // switch height
-    private static final int KNOB = 8;
+    private static final int BOX_SIZE = 14;
+    private static final int BOX_RADIUS = 3;
 
     public NToggle(TickSetting setting, Module mod) {
         this.setting = setting;
@@ -31,40 +30,68 @@ public class NToggle extends NSettingComponent {
     public void draw(int mouseX, int mouseY) {
         float h = FontUtil.poppinsRegular.getHeight();
         int centerY = y + (int) (h / 2);
+        int boxY = centerY - BOX_SIZE / 2;
 
-        // Toggle track
         float percent = Utils.Client.smoothPercent(
             (setting.isToggled() ? anim.getElapsedTime() : anim.getTimeLeft()) / (float) anim.getCooldownTime()
         );
-        int trackColor = NullTheme.lerpColor(NullTheme.TOGGLE_OFF_TRACK, NullTheme.TOGGLE_ON_TRACK, percent);
 
-        int trackX = x;
-        int trackY = centerY - SH / 2;
-        RenderUtils.drawRoundedRect(trackX, trackY, trackX + SW, trackY + SH, SH / 2f, trackColor);
+        // ── Checkbox background ──
+        int bgColor = NullTheme.lerpColor(NullTheme.CHECKBOX_UNCHECKED_BG, NullTheme.CHECKBOX_CHECKED_BG, percent);
+        RenderUtils.drawRoundedRect(x, boxY, x + BOX_SIZE, boxY + BOX_SIZE, BOX_RADIUS, bgColor);
 
-        // Glow when on
-        if (percent > 0.5f) {
-            RenderUtils.drawRoundedRect(trackX - 1, trackY - 1, trackX + SW + 1, trackY + SH + 1,
-                    (SH + 2) / 2f, NullTheme.ACCENT_GLOW_SOFT);
+        // ── Border when unchecked ──
+        if (percent < 0.5f) {
+            RenderUtils.drawRoundedOutline(x, boxY, x + BOX_SIZE, boxY + BOX_SIZE, BOX_RADIUS, 1, NullTheme.CHECKBOX_BORDER);
         }
 
-        // Knob
-        int knobX = (int) (trackX + 1 + percent * (SW - KNOB - 2));
-        int knobY = trackY + (SH - KNOB) / 2;
-        RenderUtils.drawRoundedRect(knobX, knobY, knobX + KNOB, knobY + KNOB, KNOB / 2f, NullTheme.TOGGLE_KNOB);
+        // ── Glow when checked ──
+        if (percent > 0.3f) {
+            int glowAlpha = (int) (percent * 0x1A);
+            int glowColor = (glowAlpha << 24) | (NullTheme.ACCENT & 0x00FFFFFF);
+            RenderUtils.drawRoundedRect(x - 2, boxY - 2, x + BOX_SIZE + 2, boxY + BOX_SIZE + 2,
+                    BOX_RADIUS + 1, glowColor);
+        }
 
-        // Label
-        FontUtil.poppinsRegular.drawSmoothString(setting.getName(), x + SW + 6, y, NullTheme.TEXT_LABEL);
+        // ── Checkmark when checked (simple cross/tick using GL11) ──
+        if (percent > 0.5f) {
+            int checkAlpha = (int) (Math.min(1f, (percent - 0.5f) * 2f) * 255);
+            int checkColor = (checkAlpha << 24) | (NullTheme.CHECKBOX_CHECK_COLOR & 0x00FFFFFF);
+            
+            org.lwjgl.opengl.GL11.glPushMatrix();
+            org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+            org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_BLEND);
+            org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_LINE_SMOOTH);
+            org.lwjgl.opengl.GL11.glLineWidth(2.5f);
+            
+            float f3 = (float)(checkColor >> 24 & 255) / 255.0F;
+            float f = (float)(checkColor >> 16 & 255) / 255.0F;
+            float f1 = (float)(checkColor >> 8 & 255) / 255.0F;
+            float f2 = (float)(checkColor & 255) / 255.0F;
+            org.lwjgl.opengl.GL11.glColor4f(f, f1, f2, f3);
+            
+            org.lwjgl.opengl.GL11.glBegin(org.lwjgl.opengl.GL11.GL_LINE_STRIP);
+            org.lwjgl.opengl.GL11.glVertex2d(x + 3, boxY + 7);
+            org.lwjgl.opengl.GL11.glVertex2d(x + 6, boxY + 10);
+            org.lwjgl.opengl.GL11.glVertex2d(x + 11, boxY + 4);
+            org.lwjgl.opengl.GL11.glEnd();
+            
+            org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+            org.lwjgl.opengl.GL11.glPopMatrix();
+        }
+
+        // ── Label ──
+        FontUtil.poppinsRegular.drawSmoothString(setting.getName(), x + BOX_SIZE + 8, y, NullTheme.TEXT_LABEL);
     }
 
     @Override
     public int getHeight() {
-        return Math.max((int) FontUtil.poppinsRegular.getHeight(), 12) + 2;
+        return Math.max((int) FontUtil.poppinsRegular.getHeight(), BOX_SIZE) + 4;
     }
 
     @Override
     public boolean mouseDown(int mouseX, int mouseY, int button) {
-        if (mouseX >= x && mouseX <= x + SW + 6 + FontUtil.poppinsRegular.getStringWidth(setting.getName())
+        if (mouseX >= x && mouseX <= x + BOX_SIZE + 8 + FontUtil.poppinsRegular.getStringWidth(setting.getName())
                 && mouseY >= y && mouseY <= y + getHeight()) {
             anim.setCooldown(NullTheme.ANIM_TOGGLE);
             anim.start();

@@ -2,8 +2,11 @@ package keystrokesmod.client.clickgui.nullgui;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -20,40 +23,49 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 
 /**
- * NULL Client ClickGUI — "Obsidian Terminal" themed sidebar layout.
+ * NULL Client ClickGUI — centered overlay window.
+ * The game world remains visible around the edges.
  *
- * Layout:
- * ┌─────────────────────────────────────────────┐
- * │ ┌──────────┬──────────────────────────────┐ │
- * │ │ NULL     │  [Category Title]            │ │
- * │ │ Client   │  [Description]               │ │
- * │ │          ├──────────────────────────────┤ │
- * │ │ Combat 5 │  ┌─ Module Card ────────────┐│ │
- * │ │ Movement │  │ Name      [toggle]  ▼    ││ │
- * │ │ Player   │  └──────────────────────────┘│ │
- * │ │ Render   │  ...                         │ │
- * │ │ Other    │                              │ │
- * │ │ Client   │                              │ │
- * │ └──────────┴──────────────────────────────┘ │
- * └─────────────────────────────────────────────┘
+ * Key behavior:
+ * - Bound key (right shift by default): opens GUI; closes only after release + re-press
+ * - ESC and E: always close the GUI (never open)
  */
 public class NullClickGui extends GuiScreen {
 
+    // ── Virtual "favorites" tab name ──
+    private static final String FAVORITES_TAB = "Favorites";
+
     private final List<ModuleCategory> categories = new ArrayList<ModuleCategory>();
+    private String activeTab;
     private ModuleCategory activeCategory;
     private final List<NullModuleRow> rows = new ArrayList<NullModuleRow>();
 
-    private int scrollOffset = 0;
+    /** Module names that are favorited — persists across GUI open/close */
+    public static final Set<String> favorites = new HashSet<String>();
+
+    // ── Key debounce ──
+    /** The keycode used to open this GUI (set by GuiModule) */
+    public int boundKey = 54; // default: right shift
+    /** Whether the bound key has been released since the GUI was opened */
+    public boolean boundKeyReleased = false;
+
+    // ── Scroll offsets ──
+    private int moduleScrollOffset = 0;
+    private int sidebarScrollOffset = 0;
+
     private final CoolDown openAnim = new CoolDown(NullTheme.ANIM_OPEN_GUI);
 
-    // Category descriptions for the header area
-    private static final String[] CAT_DESCRIPTIONS = {
-        "Advanced heuristic modules for PvP combat advantage.",
-        "Movement enhancement and traversal modifications.",
-        "Player utility modules for automation and efficiency.",
-        "Visual enhancements and rendering modifications.",
-        "Miscellaneous utility modules.",
-        "Client configuration and interface settings."
+    // Computed window bounds (recalculated each frame)
+    private int winX, winY, winW, winH;
+
+    // Category unicode icons
+    private static final String[] CAT_ICONS = {
+        "\u2694",  // ⚔ Combat
+        "\u26A1",  // ⚡ Movement
+        "\u2666",  // ♦ Player
+        "\u25C9",  // ◉ Render
+        "\u2022\u2022\u2022", // ••• Other
+        "\u2699"   // ⚙ Client
     };
 
     public NullClickGui() {
@@ -63,8 +75,11 @@ public class NullClickGui extends GuiScreen {
             if (!Raven.moduleManager.getModulesInCategory(cat).isEmpty())
                 categories.add(cat);
         }
-        if (!categories.isEmpty())
-            setActiveCategory(categories.get(0));
+        if (!categories.isEmpty()) {
+            activeCategory = categories.get(0);
+            activeTab = activeCategory.getName();
+            rebuildRows();
+        }
     }
 
     public void open() {
@@ -72,20 +87,48 @@ public class NullClickGui extends GuiScreen {
         openAnim.start();
     }
 
+    // ── TAB SWITCHING ────────────────────────────────────────────
+
+    private void setActiveFavorites() {
+        activeTab = FAVORITES_TAB;
+        activeCategory = null;
+        moduleScrollOffset = 0;
+        rebuildRows();
+    }
+
     private void setActiveCategory(ModuleCategory cat) {
+        activeTab = cat.getName();
         activeCategory = cat;
-        scrollOffset = 0;
+        moduleScrollOffset = 0;
+        rebuildRows();
+    }
+
+    private void rebuildRows() {
         rows.clear();
-        for (Module mod : Raven.moduleManager.getModulesInCategory(cat)) {
-            if (mod instanceof keystrokesmod.client.module.GuiModule
-                    && ((keystrokesmod.client.module.GuiModule) mod).getGuiCategory() == ModuleCategory.config)
-                continue;
-            rows.add(new NullModuleRow(mod));
+        if (FAVORITES_TAB.equals(activeTab)) {
+            for (ModuleCategory cat : categories) {
+                for (Module mod : Raven.moduleManager.getModulesInCategory(cat)) {
+                    if (favorites.contains(mod.getName())) {
+                        rows.add(new NullModuleRow(mod));
+                    }
+                }
+            }
+        } else if (activeCategory != null) {
+            for (Module mod : Raven.moduleManager.getModulesInCategory(activeCategory)) {
+                if (mod instanceof keystrokesmod.client.module.GuiModule
+                        && ((keystrokesmod.client.module.GuiModule) mod).getGuiCategory() == ModuleCategory.config)
+                    continue;
+                rows.add(new NullModuleRow(mod));
+            }
         }
     }
 
-    private int winX() { return (width  - NullTheme.WIN_W) / 2; }
-    private int winY() { return (height - NullTheme.WIN_H) / 2; }
+    /** Called by NullModuleRow when a star is toggled */
+    public void onFavoriteChanged() {
+        if (FAVORITES_TAB.equals(activeTab)) {
+            rebuildRows();
+        }
+    }
 
     private int countEnabled(ModuleCategory cat) {
         int count = 0;
@@ -94,13 +137,14 @@ public class NullClickGui extends GuiScreen {
         return count;
     }
 
-    private int getCategoryIndex(ModuleCategory cat) {
-        return categories.indexOf(cat);
-    }
+    // ── WINDOW GEOMETRY ──────────────────────────────────────────
 
-    // ════════════════════════════════════════════════════════════
-    //  RENDERING
-    // ════════════════════════════════════════════════════════════
+    private void computeWindowBounds() {
+        winW = (int) (width * NullTheme.WINDOW_WIDTH_RATIO);
+        winH = (int) (height * NullTheme.WINDOW_HEIGHT_RATIO);
+        winX = (width - winW) / 2;
+        winY = (height - winH) / 2;
+    }
 
     @Override
     public void initGui() {
@@ -108,184 +152,285 @@ public class NullClickGui extends GuiScreen {
         open();
     }
 
+    // ── RENDERING ────────────────────────────────────────────────
+
     @Override
     public void drawScreen(int mx, int my, float partial) {
         super.drawScreen(mx, my, partial);
-
-        // Full-screen overlay
-        drawRect(0, 0, width, height, NullTheme.OVERLAY);
+        computeWindowBounds();
 
         float t = Utils.Client.smoothPercent(
             openAnim.getElapsedTime() / (float) openAnim.getCooldownTime()
         );
 
-        int wx = winX(), wy = winY();
+        // Dim overlay behind the window
+        Gui.drawRect(0, 0, width, height, NullTheme.OVERLAY);
 
-        // Scale-in animation
         GL11.glPushMatrix();
-        GL11.glTranslatef(wx + NullTheme.WIN_W / 2f, wy + NullTheme.WIN_H / 2f, 0f);
+        float cx = winX + winW / 2f;
+        float cy = winY + winH / 2f;
+        GL11.glTranslatef(cx, cy, 0f);
         GL11.glScalef(t, t, 1f);
-        GL11.glTranslatef(-(wx + NullTheme.WIN_W / 2f), -(wy + NullTheme.WIN_H / 2f), 0f);
+        GL11.glTranslatef(-cx, -cy, 0f);
 
-        drawWindowFrame(wx, wy);
-        drawSidebar(mx, my, wx, wy);
-        drawModulePanel(mx, my, wx, wy);
+        drawWindowFrame();
+        drawSidebar(mx, my);
+        drawModulePanel(mx, my);
 
         GL11.glPopMatrix();
     }
 
-    private void drawWindowFrame(int wx, int wy) {
-        // Main window — gradient background
-        // Draw bottom layer first (gradient bottom)
-        RenderUtils.drawRoundedRect(wx, wy, wx + NullTheme.WIN_W, wy + NullTheme.WIN_H,
-                12, NullTheme.BG_BOTTOM);
-        // Top half overlay for gradient effect
-        RenderUtils.drawRoundedRect(wx, wy, wx + NullTheme.WIN_W, wy + NullTheme.WIN_H / 2,
-                12, NullTheme.BG_TOP, new boolean[]{true, false, false, true});
-
-        // Sidebar panel — darker
-        RenderUtils.drawRoundedRect(wx, wy, wx + NullTheme.SIDEBAR_W, wy + NullTheme.WIN_H,
-                12, NullTheme.SIDEBAR_BG, new boolean[]{true, true, false, false});
-
+    private void drawWindowFrame() {
+        // Outer window
+        RenderUtils.drawRoundedRect(winX, winY, winX + winW, winY + winH,
+                NullTheme.WINDOW_RADIUS, NullTheme.BG_MAIN);
+        RenderUtils.drawRoundedOutline(winX, winY, winX + winW, winY + winH,
+                NullTheme.WINDOW_RADIUS, 1, NullTheme.GHOST_BORDER);
+        // Sidebar panel
+        RenderUtils.drawRoundedRect(winX, winY, winX + NullTheme.SIDEBAR_W, winY + winH,
+                NullTheme.WINDOW_RADIUS, NullTheme.SIDEBAR_BG);
         // Sidebar divider
-        Gui.drawRect(wx + NullTheme.SIDEBAR_W, wy + 8,
-                wx + NullTheme.SIDEBAR_W + 1, wy + NullTheme.WIN_H - 8,
-                NullTheme.SIDEBAR_DIVIDER);
-
-        // Subtle outer glow
-        RenderUtils.drawRoundedOutline(wx - 1, wy - 1, wx + NullTheme.WIN_W + 1, wy + NullTheme.WIN_H + 1,
-                13, 1, NullTheme.ACCENT_GLOW_SOFT);
+        Gui.drawRect(winX + NullTheme.SIDEBAR_W, winY + 12,
+                     winX + NullTheme.SIDEBAR_W + 1, winY + winH - 12, NullTheme.GHOST_BORDER);
     }
 
-    private void drawSidebar(int mx, int my, int wx, int wy) {
-        // ── Branding: "NULL Client" ──
-        float brandY = wy + 12;
-        FontUtil.poppinsBold.drawSmoothString("NULL", wx + 12, brandY, NullTheme.TEXT_PRIMARY);
-        float nullW = (float) FontUtil.poppinsBold.getStringWidth("NULL");
-        FontUtil.poppinsRegular.drawSmoothString("Client", wx + 12 + nullW + 4, brandY + 1, NullTheme.ACCENT);
+    // ── SIDEBAR (with scroll support) ────────────────────────────
 
-        // Branding glow effect (subtle)
-        RenderUtils.drawRoundedRect(wx + 8, brandY - 2, wx + NullTheme.SIDEBAR_W - 8,
-                brandY + FontUtil.poppinsBold.getHeight() + 4, 6, NullTheme.ACCENT_GLOW_SOFT);
+    /** Total height of all sidebar content below the brand header */
+    private int sidebarContentHeight;
+    /** Y position where scrollable sidebar content starts (below branding) */
+    private int sidebarContentStartY;
 
-        // ── Category buttons ──
-        int spacing = 24;
-        int sy = wy + 38;
+    private void drawSidebar(int mx, int my) {
+        int sbX = winX;
+        int sbRight = winX + NullTheme.SIDEBAR_W;
 
+        // ── Branding (fixed — does NOT scroll) ──
+        float brandY = winY + 20;
+        
+        // Glow effect for NULL Client
+        RenderUtils.drawRoundedRect(sbX + 10, (int)brandY - 2, sbX + 80, (int)brandY + 15, 8, NullTheme.ACCENT_GLOW_SOFT);
+        
+        FontUtil.nullTitle.drawSmoothString("NULL", sbX + 16, brandY, NullTheme.TEXT_PRIMARY);
+        float nullW = (float) FontUtil.nullTitle.getStringWidth("NULL");
+        FontUtil.nullTitle.drawSmoothString("CLIENT", sbX + 16 + nullW + 4, brandY, NullTheme.ACCENT);
+        FontUtil.poppinsRegular.drawSmoothString("v1.0.0", sbX + 16, brandY + 17, NullTheme.TEXT_SECONDARY);
+        Gui.drawRect(sbX + 16, (int)(brandY + 30), sbRight - 16, (int)(brandY + 31), NullTheme.GHOST_BORDER);
+
+        sidebarContentStartY = (int)(brandY + 40);
+        int sidebarBottomY = winY + winH - 8;
+
+        // ── Scissor for scrollable sidebar categories ──
+        ScaledResolution sr = new ScaledResolution(Raven.mc);
+        int scale = sr.getScaleFactor();
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(
+            sbX * scale,
+            (height - sidebarBottomY) * scale,
+            NullTheme.SIDEBAR_W * scale,
+            (sidebarBottomY - sidebarContentStartY) * scale
+        );
+
+        int spacing = 34;
+        int sy = sidebarContentStartY + sidebarScrollOffset;
+
+        // ★ Favorites — always first
+        drawSidebarItem(sbX, sbRight, sy, FAVORITES_TAB.equals(activeTab),
+                "Favorites",
+                FAVORITES_TAB.equals(activeTab) ? NullTheme.STAR_ACTIVE : NullTheme.TEXT_SECONDARY,
+                favorites.isEmpty() ? -1 : favorites.size(), mx, my);
+        sy += spacing;
+
+        // Thin separator after favorites
+        Gui.drawRect(sbX + 16, sy - 6, sbRight - 16, sy - 5, NullTheme.GHOST_BORDER);
+        sy += 4;
+
+        // Real categories
         for (int i = 0; i < categories.size(); i++) {
             ModuleCategory cat = categories.get(i);
-            boolean active = cat == activeCategory;
+            boolean active = activeCategory == cat;
 
-            int itemLeft = wx + 4;
-            int itemRight = wx + NullTheme.SIDEBAR_W - 4;
-            int itemTop = sy - 2;
-            int itemBottom = sy + 18;
+            int textColor = active ? NullTheme.ACCENT : NullTheme.TEXT_SECONDARY;
+            int badge = countEnabled(cat);
 
-            boolean hover = !active && mx >= itemLeft && mx <= itemRight
-                    && my >= itemTop && my <= itemBottom;
-
-            // Background
-            if (active) {
-                RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_ACTIVE_BG);
-                // Active indicator bar (left edge)
-                RenderUtils.drawRoundedRect(itemLeft, itemTop + 2, itemLeft + 3, itemBottom - 2, 2, NullTheme.ACTIVE_INDICATOR);
-            } else if (hover) {
-                RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_HOVER);
-            }
-
-            // Category name
-            int textColor = active ? NullTheme.TEXT_PRIMARY : NullTheme.TEXT_SECONDARY;
-            FontUtil.poppinsRegular.drawSmoothString(cat.getName(), wx + 12,
-                    sy + (16 - FontUtil.poppinsRegular.getHeight()) / 2f, textColor);
-
-            // Enabled count badge
-            int enabledCount = countEnabled(cat);
-            if (enabledCount > 0) {
-                String countStr = String.valueOf(enabledCount);
-                float badgeTextW = (float) FontUtil.poppinsRegular.getStringWidth(countStr);
-                int badgeW = Math.max(14, (int) badgeTextW + 8);
-                int badgeX = itemRight - badgeW - 2;
-                int badgeY = sy;
-                int badgeBg = active ? NullTheme.ACCENT : NullTheme.BADGE_BG;
-                RenderUtils.drawRoundedRect(badgeX, badgeY, badgeX + badgeW, badgeY + 14, 7, badgeBg);
-                FontUtil.poppinsRegular.drawSmoothString(countStr,
-                        badgeX + (badgeW - badgeTextW) / 2f,
-                        badgeY + (14 - FontUtil.poppinsRegular.getHeight()) / 2f, NullTheme.BADGE_TEXT);
-            }
-
+            drawSidebarItem(sbX, sbRight, sy, active, cat.getName(),
+                    textColor, badge, mx, my);
             sy += spacing;
+        }
+
+        sidebarContentHeight = sy - sidebarContentStartY - sidebarScrollOffset;
+
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    private void drawSidebarItem(int sbX, int sbRight, int sy, boolean active,
+                                  String name, int textColor,
+                                  int badge, int mx, int my) {
+        int itemLeft = sbX + 6;
+        int itemRight = sbRight - 6;
+        int itemTop = sy - 3;
+        int itemBottom = sy + 24;
+
+        boolean hover = !active && mx >= itemLeft && mx <= itemRight
+                && my >= itemTop && my <= itemBottom;
+
+        if (active) {
+            RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_ACTIVE_BG);
+            RenderUtils.drawRoundedRect(itemLeft, itemTop + 5, itemLeft + 3, itemBottom - 5, 2, NullTheme.ACTIVE_INDICATOR);
+        } else if (hover) {
+            RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_HOVER);
+        }
+
+        FontUtil.nullCategory.drawSmoothString(name, sbX + 16,
+                sy + (21 - FontUtil.nullCategory.getHeight()) / 2f, textColor);
+
+        if (badge > 0) {
+            String countStr = String.valueOf(badge);
+            float badgeTextW = (float) FontUtil.poppinsRegular.getStringWidth(countStr);
+            int badgeW = Math.max(16, (int) badgeTextW + 8);
+            int badgeX = itemRight - badgeW - 6;
+            int badgeY = sy + 1;
+            int badgeBg = active ? NullTheme.BADGE_BG : NullTheme.SECONDARY_DIM;
+            RenderUtils.drawRoundedRect(badgeX, badgeY, badgeX + badgeW, badgeY + 16, 8, badgeBg);
+            FontUtil.poppinsRegular.drawSmoothString(countStr,
+                    badgeX + (badgeW - badgeTextW) / 2f,
+                    badgeY + (16 - FontUtil.poppinsRegular.getHeight()) / 2f, NullTheme.BADGE_TEXT);
         }
     }
 
-    private void drawModulePanel(int mx, int my, int wx, int wy) {
-        int panelX = wx + NullTheme.SIDEBAR_W + 1;
-        int panelY = wy;
-        int panelW = NullTheme.WIN_W - NullTheme.SIDEBAR_W - 1;
-        int panelH = NullTheme.WIN_H;
+    // ── MODULE PANEL ─────────────────────────────────────────────
 
-        // ── Category header ──
-        if (activeCategory != null) {
-            // Category title
-            FontUtil.poppinsBold.drawSmoothString(activeCategory.getName(),
-                    panelX + 14, panelY + 12, NullTheme.TEXT_CATEGORY_HEADER);
+    private void drawModulePanel(int mx, int my) {
+        int panelX = winX + NullTheme.SIDEBAR_W + 1;
+        int panelW = winW - NullTheme.SIDEBAR_W - 1;
 
-            // Description
-            int catIdx = getCategoryIndex(activeCategory);
-            if (catIdx >= 0 && catIdx < CAT_DESCRIPTIONS.length) {
-                FontUtil.poppinsRegular.drawSmoothString(CAT_DESCRIPTIONS[catIdx],
-                        panelX + 14, panelY + 12 + FontUtil.poppinsBold.getHeight() + 2,
-                        NullTheme.TEXT_SECONDARY);
-            }
-        }
+        // Category title — clean, minimal
+        int headerY = winY + 22;
+        String title = FAVORITES_TAB.equals(activeTab) ? "Favorites" :
+                (activeCategory != null ? activeCategory.getName() : "");
+        FontUtil.nullTitle.drawSmoothString(title, panelX + 20, headerY, NullTheme.TEXT_PRIMARY);
 
-        int headerH = 36; // space for category title + description
+        String countLabel = rows.size() + " modules";
+        FontUtil.poppinsRegular.drawSmoothString(countLabel,
+                panelX + 20 + (float) FontUtil.nullTitle.getStringWidth(title) + 10,
+                headerY + 4, NullTheme.TEXT_SECONDARY);
 
-        // ── Scissor for scrollable module list ──
+        int contentStartY = headerY + 28;
+
+        // Scissor for scrollable module list
         ScaledResolution sr = new ScaledResolution(Raven.mc);
         int scale = sr.getScaleFactor();
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(
             panelX * scale,
-            Raven.mc.displayHeight - (panelY + panelH) * scale,
+            (height - (winY + winH - 8)) * scale,
             panelW * scale,
-            (panelH - headerH) * scale
+            (winH - (contentStartY - winY) - 8) * scale
         );
 
-        // ── Module rows ──
-        int rowY = panelY + headerH + 4 + scrollOffset;
+        int rowY = contentStartY + moduleScrollOffset;
+        int rowPadding = 16;
+        int maxRowW = Math.min(panelW - rowPadding * 2, 700);
+        int rowX = panelX + rowPadding;
+
         for (NullModuleRow row : rows) {
-            row.setPosition(panelX + 8, rowY, panelW - 16);
+            row.setPosition(rowX, rowY, maxRowW);
             row.draw(mx, my);
             rowY += row.getTotalHeight();
+        }
+
+        // Empty favorites message
+        if (rows.isEmpty() && FAVORITES_TAB.equals(activeTab)) {
+            FontUtil.poppinsRegular.drawSmoothString("Click the star on any module to add it here.",
+                    rowX, contentStartY + 16, NullTheme.TEXT_SECONDARY);
         }
 
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
     }
 
-    // ════════════════════════════════════════════════════════════
-    //  INPUT HANDLING
-    // ════════════════════════════════════════════════════════════
+    // ── INPUT: KEYBOARD ──────────────────────────────────────────
+
+    @Override
+    public void handleKeyboardInput() throws IOException {
+        int key = Keyboard.getEventKey();
+        boolean down = Keyboard.getEventKeyState();
+
+        // ── Bound key debounce: close only after release + re-press ──
+        if (key == boundKey) {
+            if (!down) {
+                boundKeyReleased = true;
+            } else if (boundKeyReleased) {
+                closeGui();
+                return;
+            }
+        }
+
+        // Let parent handle the rest (calls keyTyped for key-down events)
+        super.handleKeyboardInput();
+    }
+
+    @Override
+    public void keyTyped(char c, int key) throws IOException {
+        // Forward to setting components (e.g. keybind setting)
+        rows.forEach(r -> r.keyTyped(c, key));
+
+        // ESC and E always close
+        if (key == Keyboard.KEY_ESCAPE || key == Keyboard.KEY_E) {
+            closeGui();
+        }
+    }
+
+    private void closeGui() {
+        Raven.mc.displayGuiScreen(null);
+        Raven.configManager.save();
+        if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
+    }
+
+    // ── INPUT: MOUSE ─────────────────────────────────────────────
 
     @Override
     public void mouseClicked(int mx, int my, int button) throws IOException {
-        int wx = winX(), wy = winY();
+        computeWindowBounds();
 
-        // ── Sidebar category selection ──
-        int sy = wy + 38;
-        int spacing = 24;
-        for (ModuleCategory cat : categories) {
-            int itemLeft = wx + 4;
-            int itemRight = wx + NullTheme.SIDEBAR_W - 4;
-            if (mx >= itemLeft && mx <= itemRight && my >= sy - 2 && my <= sy + 18) {
-                setActiveCategory(cat);
+        // Click outside window — ignore (don't close, user might misclick)
+        if (mx < winX || mx > winX + winW || my < winY || my > winY + winH) {
+            return;
+        }
+
+        int sbX = winX;
+        int sbRight = winX + NullTheme.SIDEBAR_W;
+
+        // ── Sidebar clicks ──
+        if (mx >= sbX && mx <= sbRight) {
+            int spacing = 34;
+            int sy = sidebarContentStartY + sidebarScrollOffset;
+
+            // Favorites tab
+            if (mx >= sbX + 6 && mx <= sbRight - 6 && my >= sy - 3 && my <= sy + 24) {
+                setActiveFavorites();
                 return;
             }
             sy += spacing;
+            sy += 4; // separator
+
+            // Category tabs
+            for (ModuleCategory cat : categories) {
+                if (mx >= sbX + 6 && mx <= sbRight - 6 && my >= sy - 3 && my <= sy + 24) {
+                    setActiveCategory(cat);
+                    return;
+                }
+                sy += spacing;
+            }
+            return;
         }
 
         // ── Module rows ──
-        for (NullModuleRow row : rows)
-            if (row.mouseDown(mx, my, button)) return;
+        for (NullModuleRow row : rows) {
+            if (row.mouseDown(mx, my, button)) {
+                onFavoriteChanged();
+                return;
+            }
+        }
     }
 
     @Override
@@ -295,38 +440,41 @@ public class NullClickGui extends GuiScreen {
     }
 
     @Override
-    public void keyTyped(char c, int key) throws IOException {
-        rows.forEach(r -> r.keyTyped(c, key));
-        if (key == 1) { // ESC
-            Raven.mc.displayGuiScreen(null);
-            Raven.configManager.save();
-            if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
-        }
-    }
-
-    @Override
     public void handleMouseInput() throws IOException {
         super.handleMouseInput();
         int scroll = Mouse.getEventDWheel();
         if (scroll == 0) return;
 
-        int wx = winX(), wy = winY();
-        int panelX = wx + NullTheme.SIDEBAR_W + 1;
+        computeWindowBounds();
         int mx = Mouse.getEventX() * width / Raven.mc.displayWidth;
         int my = height - Mouse.getEventY() * height / Raven.mc.displayHeight - 1;
 
-        if (mx < panelX || mx > wx + NullTheme.WIN_W || my < wy || my > wy + NullTheme.WIN_H)
+        int sbRight = winX + NullTheme.SIDEBAR_W;
+
+        // ── Sidebar scroll ──
+        if (mx >= winX && mx <= sbRight && my >= winY && my <= winY + winH) {
+            sidebarScrollOffset += scroll > 0 ? 20 : -20;
+            int sidebarVisibleH = (winY + winH - 8) - sidebarContentStartY;
+            int minScroll = Math.min(0, sidebarVisibleH - sidebarContentHeight);
+            sidebarScrollOffset = Math.max(minScroll, Math.min(0, sidebarScrollOffset));
             return;
+        }
 
-        scrollOffset += scroll > 0 ? 15 : -15;
+        // ── Module panel scroll ──
+        int panelX = winX + NullTheme.SIDEBAR_W;
+        if (mx >= panelX && mx <= winX + winW && my >= winY && my <= winY + winH) {
+            moduleScrollOffset += scroll > 0 ? 25 : -25;
 
-        // Clamp scroll
-        int totalH = 0;
-        for (NullModuleRow r : rows) totalH += r.getTotalHeight();
-        totalH += 20;
-        int visibleH = NullTheme.WIN_H - 40;
-        int minScroll = Math.min(0, visibleH - totalH);
-        scrollOffset = Math.max(minScroll, Math.min(0, scrollOffset));
+            int totalH = 0;
+            for (NullModuleRow r : rows) totalH += r.getTotalHeight();
+            totalH += 16;
+
+            int headerY = winY + 22;
+            int contentStartY = headerY + 28;
+            int visibleH = (winY + winH) - contentStartY;
+            int minScroll = Math.min(0, visibleH - totalH);
+            moduleScrollOffset = Math.max(minScroll, Math.min(0, moduleScrollOffset));
+        }
     }
 
     @Override

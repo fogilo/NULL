@@ -20,5 +20,16 @@ keystrokes/
 clientconfig.kv
 
 # Environment / secrets
-.env
+*.env
 *.env.local
+
+# Minecraft Run & Logs
+run/
+bin/
+*.hprof
+*.log
+*.log.gz
+*.txt
+!README.md
+!README_DE.md
+!src/**/README.md

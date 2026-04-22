@@ -5,16 +5,21 @@ import org.lwjgl.input.Keyboard;
 import keystrokesmod.client.clickgui.nullgui.NullTheme;
 import keystrokesmod.client.module.Module;
 import keystrokesmod.client.module.modules.client.GuiModule;
+import keystrokesmod.client.utils.RenderUtils;
 import keystrokesmod.client.utils.font.FontUtil;
 
 /**
  * Keybind setting component.
  * Click to enter binding mode, then press a key to bind.
+ * Redesigned with pill-style display matching the new aesthetic.
  */
 public class NBind extends NSettingComponent {
 
     private final Module mod;
     private boolean binding;
+
+    private static final int PILL_H = 18;
+    private static final int PILL_RADIUS = 4;
 
     public NBind(Module mod) {
         this.mod = mod;
@@ -22,20 +27,40 @@ public class NBind extends NSettingComponent {
 
     @Override
     public void draw(int mouseX, int mouseY) {
-        String text;
+        // ── Label ──
+        String label = "BIND";
+        FontUtil.poppinsBold.drawSmoothString(label, x, y, NullTheme.TEXT_LABEL);
+
+        // ── Key pill ──
+        String keyText;
         if (binding) {
-            text = "Bind: [Press a key...]";
+            keyText = "Press a key...";
         } else {
-            text = "Bind: [" + mod.getBindAsString() + "]";
+            keyText = "[" + mod.getBindAsString() + "]";
         }
 
-        int color = binding ? NullTheme.ACCENT : NullTheme.TEXT_LABEL;
-        FontUtil.poppinsRegular.drawSmoothString(text, x, y, color);
+        float labelW = (float) FontUtil.poppinsBold.getStringWidth(label);
+        float keyTextW = (float) FontUtil.poppinsRegular.getStringWidth(keyText);
+        int pillW = (int) keyTextW + 16;
+        int pillX = (int) (x + labelW + 10);
+        int pillY = y - 1;
+
+        int pillBg = binding ? NullTheme.ACCENT : NullTheme.SLIDER_VALUE_PILL_BG;
+        int pillTextColor = binding ? NullTheme.TEXT_PRIMARY : NullTheme.ACCENT;
+
+        RenderUtils.drawRoundedRect(pillX, pillY, pillX + pillW, pillY + PILL_H, PILL_RADIUS, pillBg);
+        if (!binding) {
+            RenderUtils.drawRoundedOutline(pillX, pillY, pillX + pillW, pillY + PILL_H,
+                    PILL_RADIUS, 1, NullTheme.GHOST_BORDER);
+        }
+        FontUtil.poppinsRegular.drawSmoothString(keyText,
+                pillX + (pillW - keyTextW) / 2f,
+                pillY + (PILL_H - FontUtil.poppinsRegular.getHeight()) / 2f, pillTextColor);
     }
 
     @Override
     public int getHeight() {
-        return (int) FontUtil.poppinsRegular.getHeight() + 4;
+        return Math.max((int) FontUtil.poppinsBold.getHeight(), PILL_H) + 4;
     }
 
     @Override
