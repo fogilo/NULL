@@ -91,21 +91,19 @@ public class RenderUtils {
         y *= 2.0;
         x1 *= 2.0;
         y1 *= 2.0;
-        GL11.glEnable(3042);
-        GL11.glDisable(3553);
+        GlStateManager.enableBlend();
+        GlStateManager.disableTexture2D();
         GL11.glEnable(2848);
         setColor(color);
         GL11.glEnable(2848);
         GL11.glBegin(9);
         round(x, y, x1, y1, radius, round);
         GL11.glEnd();
-        GL11.glEnable(3553);
-        GL11.glDisable(3042);
-        GL11.glDisable(2848);
-        GL11.glDisable(3042);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
         GL11.glDisable(2848);
         GL11.glScaled(2.0, 2.0, 2.0);
-        GL11.glEnable(3042);
+        GlStateManager.enableBlend();
         GL11.glPopAttrib();
         GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
     }
@@ -149,19 +147,17 @@ public class RenderUtils {
         y *= 2.0;
         x1 *= 2.0;
         y1 *= 2.0;
-        GL11.glEnable(3042);
-        GL11.glDisable(3553);
+        GlStateManager.enableBlend();
+        GlStateManager.disableTexture2D();
         setColor(color);
         GL11.glEnable(2848);
         GL11.glLineWidth(borderSize);
         GL11.glBegin(2);
         round(x, y, x1, y1, radius, drawCorner);
         GL11.glEnd();
-        GL11.glEnable(3553);
-        GL11.glDisable(3042);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
         GL11.glDisable(2848);
-        GL11.glDisable(3042);
-        GL11.glEnable(3553);
         GL11.glScaled(2.0, 2.0, 2.0);
         GL11.glPopAttrib();
         GL11.glLineWidth(1.0f);
@@ -188,5 +184,41 @@ public class RenderUtils {
         } catch (IOException | IllegalArgumentException | NullPointerException noway) {
             return new ResourceLocation("null");
         }
+    }
+
+    public static void drawRadialGradient(float x, float y, float radius, int centerColor, int edgeColor) {
+        float cx = ((centerColor >> 24) & 0xFF) / 255.0f;
+        float cr = ((centerColor >> 16) & 0xFF) / 255.0f;
+        float cg = ((centerColor >> 8) & 0xFF) / 255.0f;
+        float cb = (centerColor & 0xFF) / 255.0f;
+
+        float ex = ((edgeColor >> 24) & 0xFF) / 255.0f;
+        float er = ((edgeColor >> 16) & 0xFF) / 255.0f;
+        float eg = ((edgeColor >> 8) & 0xFF) / 255.0f;
+        float eb = (edgeColor & 0xFF) / 255.0f;
+
+        GlStateManager.enableBlend();
+        GlStateManager.disableTexture2D();
+        // Additive blending for a true light source effect!
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+        GlStateManager.alphaFunc(GL11.GL_GREATER, 0.0f);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+
+        GL11.glBegin(GL11.GL_TRIANGLE_FAN);
+        GL11.glColor4f(cr, cg, cb, cx);
+        GL11.glVertex2f(x, y); // Center point
+
+        GL11.glColor4f(er, eg, eb, ex);
+        for (int i = 0; i <= 360; i += 5) { // 5 degrees step for smoothness
+            double angle = Math.toRadians(i);
+            GL11.glVertex2d(x + Math.sin(angle) * radius, y + Math.cos(angle) * radius);
+        }
+        GL11.glEnd();
+
+        GL11.glShadeModel(GL11.GL_FLAT);
+        // Reset blend function to standard alpha blending
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.enableTexture2D();
+        GlStateManager.disableBlend();
     }
 }

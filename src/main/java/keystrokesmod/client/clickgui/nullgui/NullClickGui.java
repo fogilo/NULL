@@ -57,6 +57,7 @@ public class NullClickGui extends GuiScreen {
 
     // Computed window bounds (recalculated each frame)
     private int winX, winY, winW, winH;
+    private float uiScale = 1.0f;
 
     // Category unicode icons
     private static final String[] CAT_ICONS = {
@@ -146,9 +147,38 @@ public class NullClickGui extends GuiScreen {
         winY = (height - winH) / 2;
     }
 
+    // ── ANIMATION & PARTICLES ────────────────────────────────────
+    public static float smoothMx = -1, smoothMy = -1;
+    private long lastFrameTime;
+    
+    private static class Particle {
+        float x, y, speed, size;
+        Particle(int w, int h) {
+            x = (float)(Math.random() * w);
+            y = (float)(Math.random() * h);
+            speed = 0.2f + (float)Math.random() * 0.5f;
+            size = 1.0f + (float)Math.random() * 2.0f;
+        }
+        void update(int h, float delta) {
+            y -= speed * delta;
+            if (y < 0) {
+                y = h;
+                x = (float)(Math.random() * Raven.mc.displayWidth); // rough bounds
+            }
+        }
+    }
+    private List<Particle> particles = new ArrayList<>();
+
     @Override
     public void initGui() {
         super.initGui();
+        lastFrameTime = System.currentTimeMillis();
+        smoothMx = -1;
+        smoothMy = -1;
+        particles.clear();
+        for (int i = 0; i < 80; i++) { // Increased particle count
+            particles.add(new Particle(width, height));
+        }
         open();
     }
 
@@ -159,12 +189,42 @@ public class NullClickGui extends GuiScreen {
         super.drawScreen(mx, my, partial);
         computeWindowBounds();
 
+        // Delta Time calculation
+        long now = System.currentTimeMillis();
+        float delta = (now - lastFrameTime) / 16.0f; // normalize to ~60 FPS
+        lastFrameTime = now;
+
+        // Smooth Mouse Tracking (200ms ease-out approximation via LERP)
+        if (smoothMx == -1) {
+            smoothMx = mx;
+            smoothMy = my;
+        } else {
+            smoothMx += (mx - smoothMx) * Math.min(1.0f, 0.15f * delta);
+            smoothMy += (my - smoothMy) * Math.min(1.0f, 0.15f * delta);
+        }
+
         float t = Utils.Client.smoothPercent(
             openAnim.getElapsedTime() / (float) openAnim.getCooldownTime()
         );
 
         // Dim overlay behind the window
         Gui.drawRect(0, 0, width, height, NullTheme.OVERLAY);
+
+        // Draw Particles behind the main UI elements
+        for (Particle p : particles) {
+            p.update(height, delta);
+            float dist = (float) Math.hypot(p.x - smoothMx, p.y - smoothMy);
+            float pAlpha = 0.35f; // stronger base opacity
+            float pSize = p.size;
+            // React to flashlight
+            if (dist < NullTheme.FLASHLIGHT_RADIUS) {
+                float intensity = 1.0f - (dist / NullTheme.FLASHLIGHT_RADIUS);
+                pAlpha += intensity * 1.0f; // stronger reaction
+                pSize += intensity * 2.5f; // larger growth
+            }
+            int color = (Math.min(255, (int)(pAlpha * 255)) << 24) | (NullTheme.PARTICLE_BASE & 0x00FFFFFF);
+            RenderUtils.drawRoundedRect(p.x - pSize/2, p.y - pSize/2, p.x + pSize/2, p.y + pSize/2, pSize/2, color);
+        }
 
         GL11.glPushMatrix();
         float cx = winX + winW / 2f;
@@ -174,6 +234,10 @@ public class NullClickGui extends GuiScreen {
         GL11.glTranslatef(-cx, -cy, 0f);
 
         drawWindowFrame();
+        
+        // Draw Flashlight ON TOP of the window background, but behind the text/modules
+        RenderUtils.drawRadialGradient(smoothMx, smoothMy, NullTheme.FLASHLIGHT_RADIUS, NullTheme.FLASHLIGHT_CENTER, NullTheme.FLASHLIGHT_EDGE);
+
         drawSidebar(mx, my);
         drawModulePanel(mx, my);
 
@@ -194,12 +258,23 @@ public class NullClickGui extends GuiScreen {
                      winX + NullTheme.SIDEBAR_W + 1, winY + winH - 12, NullTheme.GHOST_BORDER);
     }
 
-    // ── SIDEBAR (with scroll support) ────────────────────────────
-
     /** Total height of all sidebar content below the brand header */
     private int sidebarContentHeight;
     /** Y position where scrollable sidebar content starts (below branding) */
     private int sidebarContentStartY;
+
+    private void applyScissor(float x, float y, float w, float h) {
+        ScaledResolution sr = new ScaledResolution(Raven.mc);
+        int scale = sr.getScaleFactor();
+        
+        int scissorX = (int) (x * scale);
+        int scissorY = (int) (Raven.mc.displayHeight - (y + h) * scale);
+        int scissorW = (int) (w * scale);
+        int scissorH = (int) (h * scale);
+        
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
+    }
 
     private void drawSidebar(int mx, int my) {
         int sbX = winX;
@@ -208,42 +283,38 @@ public class NullClickGui extends GuiScreen {
         // ── Branding (fixed — does NOT scroll) ──
         float brandY = winY + 20;
         
-        // Glow effect for NULL Client
-        RenderUtils.drawRoundedRect(sbX + 10, (int)brandY - 2, sbX + 80, (int)brandY + 15, 8, NullTheme.ACCENT_GLOW_SOFT);
+        float nullW = (float) FontUtil.nullTitle.getStringWidth("NULL");
+        float clientW = (float) FontUtil.nullTitle.getStringWidth("CLIENT");
+        int totalBrandW = (int)(nullW + 4 + clientW);
+        int brandH = FontUtil.nullTitle.getHeight();
+        int padX = 5;
+        int padY = 3;
+        
+        // Glow effect for NULL Client (perfectly symmetrical)
+        RenderUtils.drawRoundedRect(sbX + 16 - padX, (int)brandY - padY, sbX + 16 + totalBrandW + padX, (int)brandY + brandH + padY - 1, 6, NullTheme.ACCENT_GLOW_SOFT);
         
         FontUtil.nullTitle.drawSmoothString("NULL", sbX + 16, brandY, NullTheme.TEXT_PRIMARY);
-        float nullW = (float) FontUtil.nullTitle.getStringWidth("NULL");
         FontUtil.nullTitle.drawSmoothString("CLIENT", sbX + 16 + nullW + 4, brandY, NullTheme.ACCENT);
-        FontUtil.poppinsRegular.drawSmoothString("v1.0.0", sbX + 16, brandY + 17, NullTheme.TEXT_SECONDARY);
-        Gui.drawRect(sbX + 16, (int)(brandY + 30), sbRight - 16, (int)(brandY + 31), NullTheme.GHOST_BORDER);
+        FontUtil.poppinsRegular.drawSmoothString("v1.0.0", sbX + 16, brandY + brandH + 8, NullTheme.TEXT_SECONDARY);
 
-        sidebarContentStartY = (int)(brandY + 40);
-        int sidebarBottomY = winY + winH - 8;
-
-        // ── Scissor for scrollable sidebar categories ──
-        ScaledResolution sr = new ScaledResolution(Raven.mc);
-        int scale = sr.getScaleFactor();
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(
-            sbX * scale,
-            (height - sidebarBottomY) * scale,
-            NullTheme.SIDEBAR_W * scale,
-            (sidebarBottomY - sidebarContentStartY) * scale
-        );
-
-        int spacing = 34;
-        int sy = sidebarContentStartY + sidebarScrollOffset;
-
-        // ★ Favorites — always first
-        drawSidebarItem(sbX, sbRight, sy, FAVORITES_TAB.equals(activeTab),
+        // ★ Favorites — Sticky, fixed below branding
+        int favSy = (int)(brandY + 42);
+        drawSidebarItem(sbX, sbRight, favSy, FAVORITES_TAB.equals(activeTab),
                 "Favorites",
                 FAVORITES_TAB.equals(activeTab) ? NullTheme.STAR_ACTIVE : NullTheme.TEXT_SECONDARY,
                 favorites.isEmpty() ? -1 : favorites.size(), mx, my);
-        sy += spacing;
-
+        
         // Thin separator after favorites
-        Gui.drawRect(sbX + 16, sy - 6, sbRight - 16, sy - 5, NullTheme.GHOST_BORDER);
-        sy += 4;
+        Gui.drawRect(sbX + 16, favSy + 28, sbRight - 16, favSy + 29, NullTheme.GHOST_BORDER);
+
+        sidebarContentStartY = favSy + 35;
+        int sidebarBottomY = winY + winH - 8;
+
+        // ── Scissor for scrollable sidebar categories ──
+        applyScissor(sbX, sidebarContentStartY, NullTheme.SIDEBAR_W, sidebarBottomY - sidebarContentStartY);
+
+        int spacing = 34;
+        int sy = sidebarContentStartY + sidebarScrollOffset + 8;
 
         // Real categories
         for (int i = 0; i < categories.size(); i++) {
@@ -318,17 +389,9 @@ public class NullClickGui extends GuiScreen {
         int contentStartY = headerY + 28;
 
         // Scissor for scrollable module list
-        ScaledResolution sr = new ScaledResolution(Raven.mc);
-        int scale = sr.getScaleFactor();
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(
-            panelX * scale,
-            (height - (winY + winH - 8)) * scale,
-            panelW * scale,
-            (winH - (contentStartY - winY) - 8) * scale
-        );
+        applyScissor(panelX, contentStartY, panelW, (winY + winH - 8) - contentStartY);
 
-        int rowY = contentStartY + moduleScrollOffset;
+        int rowY = contentStartY + moduleScrollOffset + 8;
         int rowPadding = 16;
         int maxRowW = Math.min(panelW - rowPadding * 2, 700);
         int rowX = panelX + rowPadding;
@@ -402,16 +465,17 @@ public class NullClickGui extends GuiScreen {
 
         // ── Sidebar clicks ──
         if (mx >= sbX && mx <= sbRight) {
-            int spacing = 34;
-            int sy = sidebarContentStartY + sidebarScrollOffset;
+            float brandY = winY + 20;
+            int favSy = (int)(brandY + 36);
 
             // Favorites tab
-            if (mx >= sbX + 6 && mx <= sbRight - 6 && my >= sy - 3 && my <= sy + 24) {
+            if (mx >= sbX + 6 && mx <= sbRight - 6 && my >= favSy - 3 && my <= favSy + 24) {
                 setActiveFavorites();
                 return;
             }
-            sy += spacing;
-            sy += 4; // separator
+
+            int spacing = 34;
+            int sy = sidebarContentStartY + sidebarScrollOffset;
 
             // Category tabs
             for (ModuleCategory cat : categories) {

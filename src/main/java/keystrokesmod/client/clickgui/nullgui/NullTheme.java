@@ -49,9 +49,9 @@ public final class NullTheme {
     public static final int GHOST_BORDER_STRONG      = 0x40484849;
 
     /** Sidebar background — deepest surface with slight glass */
-    public static final int SIDEBAR_BG               = 0xF0080808;
+    public static final int SIDEBAR_BG               = 0xFF000000;
     /** Main window body — slight transparency for glassmorphism */
-    public static final int BG_MAIN                  = 0xF00D0D0E;
+    public static final int BG_MAIN                  = 0xFF000000;
 
     /** Module card — default collapsed background */
     public static final int CARD_BG                  = 0x40101010; // Dark grey box
@@ -124,9 +124,20 @@ public final class NullTheme {
     public static final int TEXT_VALUE               = ACCENT;
     /** Category header/breadcrumb — muted secondary */
     public static final int TEXT_CATEGORY_HEADER     = SECONDARY;
-    /** Module description inline text */
-    public static final int TEXT_DESCRIPTION         = 0xFF606060;
+    /** Text — active module description */
+    public static final int TEXT_DESCRIPTION         = 0xFF888899;
 
+    // ── FLASHLIGHT & PARTICLES ─────────────────────────────────
+    /** Center color of the radial hover flashlight (weaker) */
+    public static final int FLASHLIGHT_CENTER        = 0x22A020F0;
+    /** Edge color of the radial hover flashlight (transparent) */
+    public static final int FLASHLIGHT_EDGE          = 0x00A020F0;
+    /** Base particle color */
+    public static final int PARTICLE_BASE            = 0x33A020F0;
+    /** The radius of the radial hover flashlight */
+    public static final float FLASHLIGHT_RADIUS      = 250f;
+
+    // ── FONTS ──────────────────────────────────────────────────
     // ══════════════════════════════════════════════════════════════
     //  TOGGLE SWITCH
     // ══════════════════════════════════════════════════════════════

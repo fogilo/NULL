@@ -107,10 +107,27 @@ public class NullModuleRow {
         if (expanded) bgColor = NullTheme.CARD_EXPANDED;
         RenderUtils.drawRoundedRect(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, bgColor);
 
-        // Ghost Border for the card when hovered or expanded
+        // ── Ghost Border for the card ──
         if (hoverHeader || expanded) {
             RenderUtils.drawRoundedOutline(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, 1,
                     expanded ? NullTheme.GHOST_BORDER_STRONG : NullTheme.GHOST_BORDER);
+        }
+
+        // ── Active Border Glow (Tracing) ──
+        float smx = NullClickGui.smoothMx;
+        float smy = NullClickGui.smoothMy;
+        float cx = Math.max(x, Math.min(smx, x + width));
+        float cy = Math.max(y, Math.min(smy, y + cardH));
+        float dist = (float) Math.hypot(smx - cx, smy - cy);
+        
+        float traceRadius = 150f;
+        if (dist < traceRadius) {
+            float intensity = 1.0f - (dist / traceRadius);
+            intensity = intensity * intensity; // quadratic falloff for softer edges
+            int glowAlpha = (int) (intensity * 200); // max alpha 200/255
+            int glowColor = (glowAlpha << 24) | (NullTheme.ACCENT & 0x00FFFFFF);
+            // Draw an outer glow tracing the edge
+            RenderUtils.drawRoundedOutline(x - 0.5f, y - 0.5f, x + width + 0.5f, y + cardH + 0.5f, NullTheme.CARD_RADIUS + 0.5f, 1.5f, glowColor);
         }
 
         // ── Accent bar on left when enabled — 3px wide with glow ──
@@ -184,7 +201,7 @@ public class NullModuleRow {
         int th = NullTheme.TOGGLE_H;
         int knob = NullTheme.TOGGLE_KNOB_SIZE;
         // Position: left of star
-        int tx = x + width - 66;
+        int tx = x + width - 74;
         int ty = y + (NullTheme.CARD_HEIGHT - th) / 2;
 
         float percent = Utils.Client.smoothPercent(
@@ -213,7 +230,9 @@ public class NullModuleRow {
         boolean fav = isFavorited();
 
         // Position star between toggle and chevron
-        int starX = x + width - 38;
+        // Toggle X is x + width - 74, Chevron X is x + width - 20
+        // Center of the space between them: x + width - 32
+        int starX = x + width - 32;
         int starY = y + (NullTheme.CARD_HEIGHT) / 2;
 
         boolean hoverStar = mx >= starX - 8 && mx <= starX + 8
@@ -363,7 +382,7 @@ public class NullModuleRow {
         if (my >= y && my <= y + NullTheme.CARD_HEIGHT) {
 
             // ── Star click (left-click) ──
-            int starX = x + width - 38;
+            int starX = x + width - 32;
             int starY = y + (NullTheme.CARD_HEIGHT) / 2;
             if (button == 0 && mx >= starX - 8 && mx <= starX + 8
                     && my >= starY - 8 && my <= starY + 8) {
@@ -373,10 +392,10 @@ public class NullModuleRow {
 
             // ── Toggle switch click (left-click) ──
             int tw = NullTheme.TOGGLE_W;
-            int tx = x + width - 66;
+            int tx = x + width - 74;
             int ty = y + (NullTheme.CARD_HEIGHT - NullTheme.TOGGLE_H) / 2;
-            if (button == 0 && mx >= tx - 4 && mx <= tx + tw + 4
-                    && my >= ty - 4 && my <= ty + NullTheme.TOGGLE_H + 4) {
+            if (button == 0 && mx >= tx && mx <= tx + tw
+                    && my >= ty && my <= ty + NullTheme.TOGGLE_H) {
                 toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
                 toggleAnim.start();
                 mod.toggle();
@@ -385,7 +404,7 @@ public class NullModuleRow {
 
             // ── Chevron click → expand/collapse ──
             int arrowAreaX = x + width - 20;
-            if (button == 0 && mx >= arrowAreaX && mx <= arrowAreaX + 20
+            if (button == 0 && mx >= arrowAreaX - 10 && mx <= arrowAreaX + 10
                     && (!settings.isEmpty() || bindRow != null)) {
                 toggleExpand();
                 return true;
