@@ -1,0 +1,17 @@
+[
+    {
+        "modid": "raindots",
+        "name": "NULL Client",
+        "description": "NULL Client - A modern and powerful Minecraft client.",
+        "version": "1.0.0",
+        "url": "https://github.com/fogilo/NULL",
+        "updateUrl": "",
+        "authorList": [
+            "fogilo"
+        ],
+        "credits": "fogilo",
+        "logoFile": "logo.png",
+        "screenshots": [],
+        "dependencies": []
+    }
+]

@@ -1,0 +1,22 @@
+{
+    "required": true,
+    "minVersion": "0.1",
+    "package": "keystrokesmod.client.mixin.mixins",
+    "refmap": "mixins.raindots.refmap.json",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "MixinEntity",
+        "MixinEntity2",
+        "MixinEntityPlayerSP",
+        "MixinEntityRenderer",
+        "MixinFontRenderer",
+        "MixinGuiMainMenu",
+        //"MixinGuiUtilRenderComponents",
+        "MixinMinecraft",
+        "MixinNetworkManager"
+        //"MixinEntityLivingBase"
+    ],
+    "client": [
+        "IMinecraft"
+    ]
+}

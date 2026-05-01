@@ -1,0 +1,35 @@
+# Build output
+build/
+out/
+
+# Gradle
+.gradle/
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# User config (contains API keys at runtime)
+keystrokes/
+clientconfig.kv
+
+# Environment / secrets
+*.env
+*.env.local
+
+# Minecraft Run & Logs
+run/
+bin/
+*.hprof
+*.log
+*.log.gz
+*.txt
+!README.md
+!README_DE.md
+!src/**/README.md
