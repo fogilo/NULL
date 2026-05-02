@@ -188,7 +188,7 @@ public class NullModuleRow {
         drawStar(mx, my);
 
         // 3. Toggle switch
-        if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles")) {
+        if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles") && !mod.getName().equalsIgnoreCase("Theme")) {
             drawToggle();
         }
 
@@ -465,7 +465,7 @@ public class NullModuleRow {
             int ty = y + (NullTheme.CARD_HEIGHT - NullTheme.TOGGLE_H) / 2;
             if (button == 0 && mx >= tx && mx <= tx + tw
                     && my >= ty && my <= ty + NullTheme.TOGGLE_H) {
-                if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles")) {
+                if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles") && !mod.getName().equalsIgnoreCase("Theme")) {
                     toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
                     toggleAnim.start();
                     mod.toggle();

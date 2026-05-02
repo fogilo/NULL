@@ -211,8 +211,9 @@ public class NullClickGui extends GuiScreen {
         super.drawScreen(mx, my, partial);
         computeWindowBounds();
 
-        // Tick FontModule to detect combo changes
+        // Tick FontModule and Theme to detect combo changes
         try { FontModule.tick(); } catch (Exception ignored) {}
+        try { keystrokesmod.client.module.modules.client.Theme.tick(); } catch (Exception ignored) {}
 
         // Delta Time calculation
         long now = System.currentTimeMillis();

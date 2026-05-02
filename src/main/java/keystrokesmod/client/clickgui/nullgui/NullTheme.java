@@ -55,101 +55,76 @@ public final class NullTheme {
 
     /** Module card — default collapsed background */
     public static final int CARD_BG                  = 0x40101010; // Dark grey box
-    /** Module card — hover */
-    public static final int CARD_HOVER               = 0x30993399; // Pleasant purple-pink
+    public static int CARD_HOVER               = 0x30993399; // Pleasant purple-pink
     /** Module card — expanded */
     public static final int CARD_EXPANDED            = 0x40151515;
     /** Settings area inside expanded card */
     public static final int CARD_SETTINGS_BG         = 0x40101010;
 
     // ══════════════════════════════════════════════════════════════
-    //  PRIMARY ACCENT — Vivid Purple (#A020F0)
+    //  PRIMARY ACCENT
     // ══════════════════════════════════════════════════════════════
-    /** Primary vivid purple — active elements, toggles ON */
-    public static final int ACCENT                   = 0xFFA020F0;
-    /** Dimmer purple for gradient effects (#7B18B8) */
-    public static final int ACCENT_DIM               = 0xFF7B18B8;
-    /** Glow effect — 40% opacity primary */
-    public static final int ACCENT_GLOW              = 0x66A020F0;
-    /** Soft glow / aura — 10% opacity primary */
-    public static final int ACCENT_GLOW_SOFT         = 0x1AA020F0;
+    public static int ACCENT                   = 0xFFA020F0;
+    public static int ACCENT_DIM               = 0xFF7B18B8;
+    public static int ACCENT_GLOW              = 0x66A020F0;
+    public static int ACCENT_GLOW_SOFT         = 0x1AA020F0;
 
     // ══════════════════════════════════════════════════════════════
-    //  SECONDARY — Muted Lavender (#985DC1)
+    //  SECONDARY
     // ══════════════════════════════════════════════════════════════
-    public static final int SECONDARY                = 0xFF985DC1;
-    public static final int SECONDARY_DIM            = 0xFF7A4A9E;
+    public static int SECONDARY                = 0xFF985DC1;
+    public static int SECONDARY_DIM            = 0xFF7A4A9E;
 
     // ══════════════════════════════════════════════════════════════
-    //  TERTIARY — Amber/Gold (#9C5C00)
+    //  TERTIARY
     // ══════════════════════════════════════════════════════════════
-    /** Used for slider value pills, special badges */
     public static final int TERTIARY                 = 0xFF9C5C00;
     public static final int TERTIARY_BRIGHT          = 0xFFBF7400;
 
     // ══════════════════════════════════════════════════════════════
-    //  FAVORITE STAR — Pink (#FF69B4 / #FF1493)
+    //  FAVORITE STAR
     // ══════════════════════════════════════════════════════════════
-    /** Star filled when module is favorited — hot pink */
-    public static final int STAR_ACTIVE              = 0xFFFF69B4;
-    /** Star outline when not favorited — muted gray */
+    public static int STAR_ACTIVE              = 0xFFFF69B4;
     public static final int STAR_INACTIVE            = 0xFF555558;
-    /** Star hover state — brighter pink */
-    public static final int STAR_HOVER               = 0xFFFF8AC5;
+    public static int STAR_HOVER               = 0xFFFF8AC5;
 
     // ══════════════════════════════════════════════════════════════
     //  CATEGORY SIDEBAR
     // ══════════════════════════════════════════════════════════════
-    /** Active category sidebar indicator bar */
-    public static final int ACTIVE_INDICATOR         = ACCENT;
-    /** Category hover highlight — 10% primary */
-    public static final int CAT_HOVER                = 0x1AA020F0;
-    /** Active category background — 15% primary */
-    public static final int CAT_ACTIVE_BG            = 0x26A020F0;
+    public static int ACTIVE_INDICATOR         = ACCENT;
+    public static int CAT_HOVER                = 0x1AA020F0;
+    public static int CAT_ACTIVE_BG            = 0x26A020F0;
 
     // ══════════════════════════════════════════════════════════════
     //  TEXT COLORS
     // ══════════════════════════════════════════════════════════════
-    /** Headlines, branding — pure white */
     public static final int TEXT_PRIMARY              = 0xFFFFFFFF;
-    /** Module names when enabled — bright purple */
-    public static final int TEXT_ENABLED             = 0xFFA020F0;
-    /** Module names when disabled — light gray */
+    public static int TEXT_ENABLED             = ACCENT;
     public static final int TEXT_DISABLED            = 0xFFB0ADB0;
-    /** Descriptions, secondary info */
     public static final int TEXT_SECONDARY           = 0xFF787878;
-    /** Settings labels — uppercase labels */
     public static final int TEXT_LABEL               = 0xFFB0ADB0;
-    /** Settings values — primary accent */
-    public static final int TEXT_VALUE               = ACCENT;
-    /** Category header/breadcrumb — muted secondary */
-    public static final int TEXT_CATEGORY_HEADER     = SECONDARY;
-    /** Text — active module description */
+    public static int TEXT_VALUE               = ACCENT;
+    public static int TEXT_CATEGORY_HEADER     = SECONDARY;
     public static final int TEXT_DESCRIPTION         = 0xFF888899;
 
     // ── FLASHLIGHT & PARTICLES ─────────────────────────────────
-    /** Center color of the radial hover flashlight (weaker) */
-    public static final int FLASHLIGHT_CENTER        = 0x22A020F0;
-    /** Edge color of the radial hover flashlight (transparent) */
-    public static final int FLASHLIGHT_EDGE          = 0x00A020F0;
-    /** Base particle color */
-    public static final int PARTICLE_BASE            = 0x33A020F0;
-    /** The radius of the radial hover flashlight */
+    public static int FLASHLIGHT_CENTER        = 0x22A020F0;
+    public static int FLASHLIGHT_EDGE          = 0x00A020F0;
+    public static int PARTICLE_BASE            = 0x33A020F0;
     public static final float FLASHLIGHT_RADIUS      = 250f;
 
-    // ── FONTS ──────────────────────────────────────────────────
     // ══════════════════════════════════════════════════════════════
     //  TOGGLE SWITCH
     // ══════════════════════════════════════════════════════════════
-    public static final int TOGGLE_ON_TRACK          = ACCENT;
+    public static int TOGGLE_ON_TRACK          = ACCENT;
     public static final int TOGGLE_OFF_TRACK         = 0xFF333338;
     public static final int TOGGLE_KNOB              = 0xFFFFFFFF;
-    public static final int TOGGLE_GLOW              = ACCENT_GLOW;
+    public static int TOGGLE_GLOW              = ACCENT_GLOW;
 
     // ══════════════════════════════════════════════════════════════
     //  CHECKBOX (settings boolean toggle)
     // ══════════════════════════════════════════════════════════════
-    public static final int CHECKBOX_CHECKED_BG      = ACCENT;
+    public static int CHECKBOX_CHECKED_BG      = ACCENT;
     public static final int CHECKBOX_UNCHECKED_BG    = 0xFF333338;
     public static final int CHECKBOX_BORDER          = 0xFF555558;
     public static final int CHECKBOX_CHECK_COLOR     = 0xFFFFFFFF;
@@ -158,16 +133,15 @@ public final class NullTheme {
     //  SLIDER
     // ══════════════════════════════════════════════════════════════
     public static final int SLIDER_TRACK             = 0xFF333338;
-    public static final int SLIDER_FILL              = ACCENT;
+    public static int SLIDER_FILL              = ACCENT;
     public static final int SLIDER_KNOB              = 0xFFFFFFFF;
-    /** Value pill background — uses tertiary accent */
     public static final int SLIDER_VALUE_PILL_BG     = 0xFF2A1F3A;
-    public static final int SLIDER_VALUE_PILL_TEXT    = ACCENT;
+    public static int SLIDER_VALUE_PILL_TEXT    = ACCENT;
 
     // ══════════════════════════════════════════════════════════════
     //  COMBO SETTING (pill buttons)
     // ══════════════════════════════════════════════════════════════
-    public static final int COMBO_ACTIVE_BG          = ACCENT;
+    public static int COMBO_ACTIVE_BG          = ACCENT;
     public static final int COMBO_ACTIVE_TEXT         = 0xFFFFFFFF;
     public static final int COMBO_INACTIVE_BG        = 0xFF2A2A30;
     public static final int COMBO_INACTIVE_TEXT       = 0xFF888890;
@@ -175,22 +149,19 @@ public final class NullTheme {
     // ══════════════════════════════════════════════════════════════
     //  DROPDOWN MENU (expandable combo)
     // ══════════════════════════════════════════════════════════════
-    /** Dropdown panel background — near-black with high opacity */
     public static final int DROPDOWN_BG              = 0xF0131316;
-    /** Dropdown item hover highlight */
-    public static final int DROPDOWN_HOVER           = 0x30A020F0;
-    /** Dropdown item selected highlight */
-    public static final int DROPDOWN_SELECTED        = 0x40A020F0;
+    public static int DROPDOWN_HOVER           = 0x30A020F0;
+    public static int DROPDOWN_SELECTED        = 0x40A020F0;
 
     // ══════════════════════════════════════════════════════════════
-    //  MODULE HOVER OUTLINE — distinct purple stroke on hover
+    //  MODULE HOVER OUTLINE
     // ══════════════════════════════════════════════════════════════
-    public static final int HOVER_OUTLINE            = 0xC0A020F0;
+    public static int HOVER_OUTLINE            = 0xC0A020F0;
 
     // ══════════════════════════════════════════════════════════════
-    //  BADGE (enabled-count on sidebar)
+    //  BADGE
     // ══════════════════════════════════════════════════════════════
-    public static final int BADGE_BG                 = ACCENT;
+    public static int BADGE_BG                 = ACCENT;
     public static final int BADGE_TEXT               = 0xFFFFFFFF;
 
     // ══════════════════════════════════════════════════════════════
@@ -214,10 +185,9 @@ public final class NullTheme {
     public static final int TOGGLE_INSET             = 2;
 
     // ══════════════════════════════════════════════════════════════
-    //  HOVER GLOW — subtle weight increase on module hover
+    //  HOVER GLOW
     // ══════════════════════════════════════════════════════════════
-    /** Soft purple glow behind card on hover — 8% primary */
-    public static final int HOVER_GLOW               = 0x14A020F0;
+    public static int HOVER_GLOW               = 0x14A020F0;
 
     // ══════════════════════════════════════════════════════════════
     //  ANIMATION DURATIONS (ms)
@@ -225,6 +195,71 @@ public final class NullTheme {
     public static final int ANIM_OPEN_GUI            = 220;
     public static final int ANIM_EXPAND              = 180;
     public static final int ANIM_TOGGLE              = 200;
+
+    // ══════════════════════════════════════════════════════════════
+    //  PRESETS
+    // ══════════════════════════════════════════════════════════════
+    public enum Preset {
+        AMETHYST(0xFFA020F0, 0xFF7B18B8, 0xFF985DC1, 0xFF7A4A9E, 0xFFFF69B4, 0xFFFF8AC5, 0x30993399, 0xC0A020F0),
+        OCEAN(0xFF1447D1, 0xFF0F36A0, 0xFF5C85D6, 0xFF4369B3, 0xFF00E5FF, 0xFF4DEDFF, 0x301447D1, 0xC01447D1),
+        EMERALD(0xFF0E5921, 0xFF0A4017, 0xFF539C65, 0xFF3D7A4D, 0xFF39FF14, 0xFF6DFF52, 0x300E5921, 0xC00E5921),
+        AMBER(0xFF6A4B3A, 0xFF4A3428, 0xFF8B6B58, 0xFF6C5344, 0xFFFFB300, 0xFFFFC54D, 0x305C4033, 0xC06A4B3A);
+
+        public final int accent, accentDim, secondary, secondaryDim, starActive, starHover, cardHover, hoverOutline;
+
+        Preset(int accent, int accentDim, int secondary, int secondaryDim, int starActive, int starHover, int cardHover, int hoverOutline) {
+            this.accent = accent;
+            this.accentDim = accentDim;
+            this.secondary = secondary;
+            this.secondaryDim = secondaryDim;
+            this.starActive = starActive;
+            this.starHover = starHover;
+            this.cardHover = cardHover;
+            this.hoverOutline = hoverOutline;
+        }
+    }
+
+    public static void applyPreset(Preset preset) {
+        ACCENT = preset.accent;
+        ACCENT_DIM = preset.accentDim;
+        
+        // Compute alphas based on preset accent
+        int baseR = (preset.accent >> 16) & 0xFF;
+        int baseG = (preset.accent >> 8) & 0xFF;
+        int baseB = preset.accent & 0xFF;
+        
+        ACCENT_GLOW = (0x66 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        ACCENT_GLOW_SOFT = (0x1A << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        CAT_HOVER = (0x1A << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        CAT_ACTIVE_BG = (0x26 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        FLASHLIGHT_CENTER = (0x22 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        FLASHLIGHT_EDGE = (0x00 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        PARTICLE_BASE = (0x33 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        DROPDOWN_HOVER = (0x30 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        DROPDOWN_SELECTED = (0x40 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+        HOVER_GLOW = (0x14 << 24) | (baseR << 16) | (baseG << 8) | baseB;
+
+        SECONDARY = preset.secondary;
+        SECONDARY_DIM = preset.secondaryDim;
+
+        STAR_ACTIVE = preset.starActive;
+        STAR_HOVER = preset.starHover;
+        CARD_HOVER = preset.cardHover;
+        HOVER_OUTLINE = preset.hoverOutline;
+
+        ACTIVE_INDICATOR = ACCENT;
+        TEXT_ENABLED = ACCENT;
+        TEXT_VALUE = ACCENT;
+        TEXT_CATEGORY_HEADER = SECONDARY;
+
+        TOGGLE_ON_TRACK = ACCENT;
+        TOGGLE_GLOW = ACCENT_GLOW;
+        CHECKBOX_CHECKED_BG = ACCENT;
+        SLIDER_FILL = ACCENT;
+        SLIDER_VALUE_PILL_TEXT = ACCENT;
+        COMBO_ACTIVE_BG = ACCENT;
+        BADGE_BG = ACCENT;
+    }
 
     // ══════════════════════════════════════════════════════════════
     //  UTILITY: lerp between two ARGB colors

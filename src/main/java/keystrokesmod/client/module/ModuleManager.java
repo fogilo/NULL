@@ -9,6 +9,7 @@ import keystrokesmod.client.module.Module.ModuleCategory;
 import keystrokesmod.client.module.modules.HUD;
 import keystrokesmod.client.module.modules.client.FontModule;
 import keystrokesmod.client.module.modules.client.ProfilesModule;
+import keystrokesmod.client.module.modules.client.Theme;
 import keystrokesmod.client.module.modules.client.GuiModule;
 import keystrokesmod.client.module.modules.client.SelfDestruct;
 import keystrokesmod.client.module.modules.client.Targets;
@@ -112,6 +113,7 @@ public class ModuleManager {
         addModule(new Targets());
         addModule(new FontModule());
         addModule(new ProfilesModule());
+        addModule(new Theme());
         //addModule(new CursorTrail());
 
         //addModule(new SpeedTest());
