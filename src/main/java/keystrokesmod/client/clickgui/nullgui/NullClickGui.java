@@ -163,10 +163,22 @@ public class NullClickGui extends GuiScreen {
     // ── WINDOW GEOMETRY ──────────────────────────────────────────
 
     private void computeWindowBounds() {
-        winW = (int) (width * NullTheme.WINDOW_WIDTH_RATIO);
-        winH = (int) (height * NullTheme.WINDOW_HEIGHT_RATIO);
-        winX = (width - winW) / 2;
-        winY = (height - winH) / 2;
+        float rawW = net.minecraft.client.Minecraft.getMinecraft().displayWidth;
+        float rawH = net.minecraft.client.Minecraft.getMinecraft().displayHeight;
+        
+        float scaleW = rawW / 1920f;
+        float scaleH = rawH / 1080f;
+        uiScale = Math.min(scaleW, scaleH);
+        
+        if (uiScale < 0.5f) uiScale = 0.5f;
+
+        float virtualWidth = width / uiScale;
+        float virtualHeight = height / uiScale;
+
+        winW = (int) (virtualWidth * NullTheme.WINDOW_WIDTH_RATIO);
+        winH = (int) (virtualHeight * NullTheme.WINDOW_HEIGHT_RATIO);
+        winX = (int) ((virtualWidth - winW) / 2f);
+        winY = (int) ((virtualHeight - winH) / 2f);
     }
 
     // ── ANIMATION & PARTICLES ────────────────────────────────────
@@ -181,11 +193,11 @@ public class NullClickGui extends GuiScreen {
             speed = 0.2f + (float)Math.random() * 0.5f;
             size = 1.0f + (float)Math.random() * 2.0f;
         }
-        void update(int h, float delta) {
+        void update(int w, int h, float delta) {
             y -= speed * delta;
             if (y < 0) {
                 y = h;
-                x = (float)(Math.random() * Raven.mc.displayWidth); // rough bounds
+                x = (float)(Math.random() * w);
             }
         }
     }
@@ -197,9 +209,12 @@ public class NullClickGui extends GuiScreen {
         lastFrameTime = System.currentTimeMillis();
         smoothMx = -1;
         smoothMy = -1;
+        computeWindowBounds();
+        float virtualWidth = width / uiScale;
+        float virtualHeight = height / uiScale;
         particles.clear();
         for (int i = 0; i < 80; i++) { // Increased particle count
-            particles.add(new Particle(width, height));
+            particles.add(new Particle((int)virtualWidth, (int)virtualHeight));
         }
         open();
     }
@@ -207,9 +222,12 @@ public class NullClickGui extends GuiScreen {
     // ── RENDERING ────────────────────────────────────────────────
 
     @Override
-    public void drawScreen(int mx, int my, float partial) {
-        super.drawScreen(mx, my, partial);
+    public void drawScreen(int rawMx, int rawMy, float partial) {
+        super.drawScreen(rawMx, rawMy, partial);
         computeWindowBounds();
+
+        int mx = (int) (rawMx / uiScale);
+        int my = (int) (rawMy / uiScale);
 
         // Tick FontModule and Theme to detect combo changes
         try { FontModule.tick(); } catch (Exception ignored) {}
@@ -236,9 +254,15 @@ public class NullClickGui extends GuiScreen {
         // Dim overlay behind the window
         Gui.drawRect(0, 0, width, height, NullTheme.OVERLAY);
 
+        GL11.glPushMatrix();
+        GL11.glScalef(uiScale, uiScale, 1.0f);
+
+        float virtualWidth = width / uiScale;
+        float virtualHeight = height / uiScale;
+
         // Draw Particles behind the main UI elements
         for (Particle p : particles) {
-            p.update(height, delta);
+            p.update((int)virtualWidth, (int)virtualHeight, delta);
             float dist = (float) Math.hypot(p.x - smoothMx, p.y - smoothMy);
             float pAlpha = 0.35f; // stronger base opacity
             float pSize = p.size;
@@ -268,6 +292,7 @@ public class NullClickGui extends GuiScreen {
         drawModulePanel(mx, my);
 
         GL11.glPopMatrix();
+        GL11.glPopMatrix();
     }
 
     private void drawWindowFrame() {
@@ -291,7 +316,7 @@ public class NullClickGui extends GuiScreen {
 
     private void applyScissor(float x, float y, float w, float h) {
         ScaledResolution sr = new ScaledResolution(Raven.mc);
-        int scale = sr.getScaleFactor();
+        float scale = sr.getScaleFactor() * uiScale;
         
         int scissorX = (int) (x * scale);
         int scissorY = (int) (Raven.mc.displayHeight - (y + h) * scale);
@@ -549,8 +574,11 @@ public class NullClickGui extends GuiScreen {
     // ── INPUT: MOUSE ─────────────────────────────────────────────
 
     @Override
-    public void mouseClicked(int mx, int my, int button) throws IOException {
+    public void mouseClicked(int rawMx, int rawMy, int button) throws IOException {
         computeWindowBounds();
+
+        int mx = (int) (rawMx / uiScale);
+        int my = (int) (rawMy / uiScale);
 
         // Click outside window — ignore (don't close, user might misclick)
         if (mx < winX || mx > winX + winW || my < winY || my > winY + winH) {
@@ -615,7 +643,9 @@ public class NullClickGui extends GuiScreen {
     }
 
     @Override
-    public void mouseReleased(int mx, int my, int button) {
+    public void mouseReleased(int rawMx, int rawMy, int button) {
+        int mx = (int) (rawMx / uiScale);
+        int my = (int) (rawMy / uiScale);
         rows.forEach(r -> r.mouseReleased(mx, my, button));
         Raven.profileManager.saveProfile();
         if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
@@ -628,8 +658,11 @@ public class NullClickGui extends GuiScreen {
         if (scroll == 0) return;
 
         computeWindowBounds();
-        int mx = Mouse.getEventX() * width / Raven.mc.displayWidth;
-        int my = height - Mouse.getEventY() * height / Raven.mc.displayHeight - 1;
+        int rawMx = Mouse.getEventX() * width / Raven.mc.displayWidth;
+        int rawMy = height - Mouse.getEventY() * height / Raven.mc.displayHeight - 1;
+
+        int mx = (int) (rawMx / uiScale);
+        int my = (int) (rawMy / uiScale);
 
         int sbRight = winX + NullTheme.SIDEBAR_W;
 
