@@ -27,6 +27,7 @@ public class AutoArmour extends Module {
 
     public AutoArmour() {
         super("AutoArmour", ModuleCategory.player);
+        this.withDescription("Automatically equips the best armor.");
         this.registerSetting(firstDelay = new DoubleSliderSetting("Open delay", 250, 450, 0, 1000, 1));
         this.registerSetting(delay = new DoubleSliderSetting("Delay", 150, 250, 0, 1000, 1));
     }

@@ -22,6 +22,7 @@ public class Reach extends Module {
 
     public Reach() {
         super("Reach", ModuleCategory.combat);
+        this.withDescription("Extends your attack reach distance.");
         this.registerSetting(reach = new DoubleSliderSetting("Reach (Blocks)", 3.1, 3.3, 3, 6, 0.05));
         this.registerSetting(weapon_only = new TickSetting("Weapon only", false));
         this.registerSetting(moving_only = new TickSetting("Moving only", false));

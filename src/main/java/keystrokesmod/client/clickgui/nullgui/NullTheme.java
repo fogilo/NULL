@@ -173,6 +173,21 @@ public final class NullTheme {
     public static final int COMBO_INACTIVE_TEXT       = 0xFF888890;
 
     // ══════════════════════════════════════════════════════════════
+    //  DROPDOWN MENU (expandable combo)
+    // ══════════════════════════════════════════════════════════════
+    /** Dropdown panel background — near-black with high opacity */
+    public static final int DROPDOWN_BG              = 0xF0131316;
+    /** Dropdown item hover highlight */
+    public static final int DROPDOWN_HOVER           = 0x30A020F0;
+    /** Dropdown item selected highlight */
+    public static final int DROPDOWN_SELECTED        = 0x40A020F0;
+
+    // ══════════════════════════════════════════════════════════════
+    //  MODULE HOVER OUTLINE — distinct purple stroke on hover
+    // ══════════════════════════════════════════════════════════════
+    public static final int HOVER_OUTLINE            = 0xC0A020F0;
+
+    // ══════════════════════════════════════════════════════════════
     //  BADGE (enabled-count on sidebar)
     // ══════════════════════════════════════════════════════════════
     public static final int BADGE_BG                 = ACCENT;

@@ -21,6 +21,7 @@ public class BedAura extends Module {
 
     public BedAura() {
         super("BedAura", ModuleCategory.player);
+        this.withDescription("Automatically destroys beds through walls.");
         this.registerSetting(d = new DescriptionSetting("Might silent flag on Hypixel."));
         this.registerSetting(r = new SliderSetting("Range", 5.0D, 2.0D, 10.0D, 1.0D));
     }

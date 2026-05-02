@@ -11,6 +11,7 @@ public class SelfDestruct extends Module {
     
     public SelfDestruct() {
         super("Self Destruct", ModuleCategory.client);
+        this.withDescription("Unloads the client from the game completely.");
     }
 
     public void onEnable() {

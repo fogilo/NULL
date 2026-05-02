@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL11;
 public class Chams extends Module {
     public Chams() {
         super("Chams", ModuleCategory.render);
+        this.withDescription("Renders entities through walls.");
     }
 
     @Subscribe

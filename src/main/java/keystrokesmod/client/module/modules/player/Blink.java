@@ -14,6 +14,7 @@ public class Blink extends Module {
     
     public Blink() {
         super("Blink", ModuleCategory.player);
+        this.withDescription("Simulates lag by withholding packets.");
     }
     
     @Subscribe

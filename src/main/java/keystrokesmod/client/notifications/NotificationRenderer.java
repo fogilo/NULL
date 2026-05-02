@@ -2,7 +2,7 @@ package keystrokesmod.client.notifications;
 
 import com.google.common.eventbus.Subscribe;
 
-import keystrokesmod.client.config.ConfigManager;
+import keystrokesmod.client.profile.ProfileManager;
 import keystrokesmod.client.event.impl.Render2DEvent;
 import keystrokesmod.client.main.ClientConfig;
 import keystrokesmod.client.module.Module;
@@ -22,7 +22,7 @@ public class NotificationRenderer {
     }
 
     public static void moduleStateChanged(Module m) {
-        if (!GuiModule.notifications() || mc.currentScreen != null || ConfigManager.applyingConfig
+        if (!GuiModule.notifications() || mc.currentScreen != null || ProfileManager.applyingConfig
                 || ClientConfig.applyingConfig)
             return;
 

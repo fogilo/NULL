@@ -23,8 +23,11 @@ public class NSlider extends NSettingComponent {
         if (dragging) {
             float percent = (mouseX - x) / (float) (width - 60); // account for value pill width
             percent = Math.max(0f, Math.min(1f, percent));
-            float value = (float) (setting.getMin() + percent * (setting.getMax() - setting.getMin()));
-            setting.setValue(value);
+            double newValue = setting.getMin() + percent * (setting.getMax() - setting.getMin());
+            if (newValue != setting.getInput()) {
+                setting.setValue(newValue);
+                keystrokesmod.client.main.Raven.profileManager.saveProfile();
+            }
         }
 
         int trackWidth = width - 60; // reserve space for value pill

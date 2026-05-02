@@ -11,6 +11,7 @@ public class NameHider extends Module {
 
     public NameHider() {
         super("Name Hider", ModuleCategory.other);
+        this.withDescription("Hides your name and other players' names.");
         this.registerSetting(a = new DescriptionSetting(Utils.Java.capitalizeWord("command") + ": cname [name]"));
     }
 

@@ -61,6 +61,7 @@ public class LeftClicker extends Module {
 
     public LeftClicker() {
         super("Left Clicker", ModuleCategory.combat);
+        this.withDescription("Automatically clicks your left mouse button.");
 
         this.registerSetting(bestWithDelayRemover = new DescriptionSetting("Best with delay remover."));
         this.registerSetting(leftCPS = new DoubleSliderSetting("Left CPS", 9, 13, 1, 60, 0.5));

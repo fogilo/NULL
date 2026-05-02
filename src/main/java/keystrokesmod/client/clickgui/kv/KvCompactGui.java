@@ -130,7 +130,7 @@ public class KvCompactGui extends GuiScreen {
 
     @Override
     public void onGuiClosed() {
-        Raven.configManager.save();
+        Raven.profileManager.saveProfile();
         Raven.clientConfig.saveConfig();
         Raven.mc.gameSettings.guiScale = GuiModule.guiScale;
     }

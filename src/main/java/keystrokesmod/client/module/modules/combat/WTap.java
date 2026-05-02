@@ -40,6 +40,7 @@ public class WTap extends Module {
 
     public WTap() {
         super("WTap", ModuleCategory.combat);
+        this.withDescription("Automatically W-Taps to increase knockback.");
 
         this.registerSetting(eventType = new ComboSetting("Event:", EventType.Attack));
         this.registerSetting(onlyPlayers = new TickSetting("Only combo players", true));

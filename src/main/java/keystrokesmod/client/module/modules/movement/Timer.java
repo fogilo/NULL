@@ -14,6 +14,7 @@ public class Timer extends Module {
 
     public Timer() {
         super("Timer", ModuleCategory.movement);
+        this.withDescription("Changes the speed of the game.");
         a = new SliderSetting("Speed", 1.0D, 0.5D, 2.5D, 0.01D);
         b = new TickSetting("Strafe only", false);
         this.registerSetting(a);

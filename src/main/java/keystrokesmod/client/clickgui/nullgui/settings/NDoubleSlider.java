@@ -26,11 +26,18 @@ public class NDoubleSlider extends NSettingComponent {
         if (dragging) {
             float percent = (mouseX - x) / (float) trackWidth;
             percent = Math.max(0f, Math.min(1f, percent));
-            float value = (float) (setting.getMin() + percent * (setting.getMax() - setting.getMin()));
-            if (draggingMax)
-                setting.setValueMax(value);
-            else
-                setting.setValueMin(value);
+            double newValue = setting.getMin() + percent * (setting.getMax() - setting.getMin());
+            if (draggingMax) {
+                if (newValue != setting.getInputMax()) {
+                    setting.setValueMax(newValue);
+                    keystrokesmod.client.main.Raven.profileManager.saveProfile();
+                }
+            } else {
+                if (newValue != setting.getInputMin()) {
+                    setting.setValueMin(newValue);
+                    keystrokesmod.client.main.Raven.profileManager.saveProfile();
+                }
+            }
         }
 
         // ── Label: UPPERCASE name ──

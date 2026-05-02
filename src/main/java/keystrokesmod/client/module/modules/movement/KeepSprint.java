@@ -15,6 +15,7 @@ public class KeepSprint extends Module {
 
     public KeepSprint() {
         super("KeepSprint", ModuleCategory.movement);
+        this.withDescription("Prevents sprint from stopping when hitting entities.");
         this.registerSetting(a = new DescriptionSetting("Default is 40% motion reduction"));
         this.registerSetting(a2 = new DescriptionSetting("and stopping sprint."));
         this.registerSetting(b = new SliderSetting("Slow %", 40.0D, 0.0D, 100.0D, 1.0D));

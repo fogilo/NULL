@@ -24,6 +24,7 @@ public class Freecam extends Module {
 
     public Freecam() {
         super("Freecam", ModuleCategory.player);
+        this.withDescription("Allows you to fly out of your body.");
         this.registerSetting(a = new SliderSetting("Speed", 2.5D, 0.5D, 10.0D, 0.5D));
         this.registerSetting(b = new TickSetting("Disable on damage", true));
     }

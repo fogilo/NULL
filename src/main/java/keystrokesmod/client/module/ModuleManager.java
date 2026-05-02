@@ -7,6 +7,8 @@ import java.util.List;
 import keystrokesmod.client.main.Raven;
 import keystrokesmod.client.module.Module.ModuleCategory;
 import keystrokesmod.client.module.modules.HUD;
+import keystrokesmod.client.module.modules.client.FontModule;
+import keystrokesmod.client.module.modules.client.ProfilesModule;
 import keystrokesmod.client.module.modules.client.GuiModule;
 import keystrokesmod.client.module.modules.client.SelfDestruct;
 import keystrokesmod.client.module.modules.client.Targets;
@@ -108,6 +110,8 @@ public class ModuleManager {
         addModule(new KillAura());
         //addModule(new Radar());
         addModule(new Targets());
+        addModule(new FontModule());
+        addModule(new ProfilesModule());
         //addModule(new CursorTrail());
 
         //addModule(new SpeedTest());
@@ -151,10 +155,6 @@ public class ModuleManager {
 
     public List<Module> getModules() {
         ArrayList<Module> allModules = new ArrayList<>(modules);
-        try {
-            allModules.addAll(Raven.configManager.configModuleManager.getConfigModules());
-        } catch (NullPointerException ignored) {
-        }
         try {
             allModules.addAll(guiModuleManager.getModules());
         } catch (NullPointerException ignored) {

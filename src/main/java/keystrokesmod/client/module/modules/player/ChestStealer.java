@@ -29,6 +29,7 @@ public class ChestStealer extends Module {
 
     public ChestStealer() {
         super("ChestStealer", ModuleCategory.player);
+        this.withDescription("Automatically loots chests quickly.");
         this.registerSetting(firstDelay = new DoubleSliderSetting("Open delay", 250, 450, 0, 1000, 1));
         this.registerSetting(delay = new DoubleSliderSetting("Delay", 150, 250, 0, 1000, 1));
         this.registerSetting(autoClose = new TickSetting("Auto Close", false));

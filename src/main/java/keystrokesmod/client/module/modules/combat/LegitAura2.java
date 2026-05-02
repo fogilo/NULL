@@ -55,6 +55,7 @@ public class LegitAura2 extends Module {
 
     public LegitAura2() {
         super("Aura", ModuleCategory.combat);
+        this.withDescription("A highly customizable combat assist.");
         this.registerSetting(new DescriptionSetting(EnumChatFormatting.RED + "" + EnumChatFormatting.BOLD + "Does not work with patcher"));
         this.registerSetting(reach = new SliderSetting("Reach (Blocks)", 3.3, 3, 6, 0.05));
         this.registerSetting(rotationDistance = new SliderSetting("Rotation Range", 3.5, 3, 6, 0.05));

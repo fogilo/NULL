@@ -22,6 +22,7 @@ public class AntiBot extends Module {
 
     public AntiBot() {
         super("AntiBot", ModuleCategory.other);
+        this.withDescription("Ignores non-player entities in combat modules.");
         withEnabled(true);
 
         this.registerSetting(a = new TickSetting("Wait 80 ticks", false));

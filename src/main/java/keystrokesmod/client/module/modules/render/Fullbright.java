@@ -14,6 +14,7 @@ public class Fullbright extends Module {
 
     public Fullbright() {
         super("Fullbright", ModuleCategory.render);
+        this.withDescription("Brightens up the world.");
         this.registerSetting(mode = new ComboSetting("Mode", Mode.GAMMA));
         this.registerSetting(new DescriptionSetting("No more darkness!"));
     }

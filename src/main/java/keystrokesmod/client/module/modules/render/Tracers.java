@@ -27,6 +27,7 @@ public class Tracers extends Module {
 
     public Tracers() {
         super("Tracers", ModuleCategory.render);
+        this.withDescription("Draw lines to players.");
         this.registerSetting(a = new TickSetting("Show invis", true));
         this.registerSetting(f = new SliderSetting("Line Width", 1.0D, 1.0D, 5.0D, 1.0D));
         this.registerSetting(sl = new SliderSetting("Distance", 1.0D, 1.0D, 512.0D, 1.0D));

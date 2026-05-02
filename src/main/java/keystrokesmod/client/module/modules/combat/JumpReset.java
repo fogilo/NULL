@@ -10,6 +10,7 @@ public class JumpReset extends Module {
 
     public JumpReset() {
         super("JumpReset", ModuleCategory.combat);
+        this.withDescription("Resets your sprint by jumping when hit.");
 
         this.registerSetting(new DescriptionSetting("Auto Jump Reset. That's it."));
     }

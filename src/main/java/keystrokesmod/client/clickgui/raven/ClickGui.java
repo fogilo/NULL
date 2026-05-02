@@ -106,12 +106,12 @@ public class ClickGui extends GuiScreen {
             }
         } else if (GuiModule.useCustomFont())
 			FontUtil.normal.drawSmoothString(
-		            "NULL Client v" + clientVersion + " | Config: " + Raven.configManager.getConfig().getName(), 4,
+		            "NULL Client v" + clientVersion + " | Config: " + Raven.profileManager.getActiveProfile(), 4,
 		            this.height - 3 - mc.fontRendererObj.FONT_HEIGHT,
 		            Utils.Client.astolfoColorsDraw(10, 14, speed));
 		else
 			mc.fontRendererObj.drawStringWithShadow(
-		            "NULL Client v" + clientVersion + " | Config: " + Raven.configManager.getConfig().getName(), 4,
+		            "NULL Client v" + clientVersion + " | Config: " + Raven.profileManager.getActiveProfile(), 4,
 		            this.height - 3 - mc.fontRendererObj.FONT_HEIGHT,
 		            Utils.Client.astolfoColorsDraw(10, 14, speed));
 
@@ -170,7 +170,7 @@ public class ClickGui extends GuiScreen {
             lastCategory.keyTyped(t, k);
         if (k == 1) {
             Raven.mc.displayGuiScreen(null);
-            Raven.configManager.save();
+            Raven.profileManager.saveProfile();
             Raven.clientConfig.saveConfig();
         }
     }
@@ -188,7 +188,7 @@ public class ClickGui extends GuiScreen {
     @Override
 	public void onGuiClosed() {
         visableCategoryList().forEach(CategoryComponent::guiClosed);
-        Raven.configManager.save();
+        Raven.profileManager.saveProfile();
         Raven.clientConfig.saveConfig();
     }
 

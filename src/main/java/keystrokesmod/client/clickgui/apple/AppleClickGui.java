@@ -287,7 +287,7 @@ public class AppleClickGui extends GuiScreen {
         rows.forEach(r -> r.keyTyped(c, key));
         if (key == 1) { // ESC
             Raven.mc.displayGuiScreen(null);
-            Raven.configManager.save();
+            Raven.profileManager.saveProfile();
             if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
         }
     }
@@ -312,7 +312,7 @@ public class AppleClickGui extends GuiScreen {
     @Override
     public void onGuiClosed() {
         Raven.mc.gameSettings.guiScale = GuiModule.guiScale;
-        Raven.configManager.save();
+        Raven.profileManager.saveProfile();
         if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
     }
 

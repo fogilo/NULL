@@ -130,6 +130,7 @@ public class Clutch extends Module {
 
     public Clutch() {
         super("Clutch", ModuleCategory.player);
+        this.withDescription("Helps you clutch by automatically placing blocks.");
 
         this.registerSetting(new DescriptionSetting("Auto-places a block when falling"));
         this.registerSetting(activationMode = new ComboSetting<>("Activation", ActivationMode.Lethal));

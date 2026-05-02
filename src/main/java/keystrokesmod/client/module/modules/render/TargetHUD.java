@@ -22,6 +22,7 @@ public class TargetHUD extends Module {
 
     public TargetHUD() {
         super("Target HUD", ModuleCategory.render);
+        this.withDescription("Displays information about your current target.");
         sr = new ScaledResolution(Minecraft.getMinecraft());
         height = sr.getScaledHeight();
         width = sr.getScaledWidth();

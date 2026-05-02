@@ -28,6 +28,7 @@ public class MiddleClick extends Module {
 
     public MiddleClick() {
         super("Middleclick", ModuleCategory.other);
+        this.withDescription("Throws pearls or performs actions on middle click.");
         this.registerSetting(showHelp = new TickSetting("Show friend help in chat", true));
         this.registerSetting(actionSetting = new ComboSetting("On click", ThrowPearl));
     }

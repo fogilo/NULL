@@ -24,6 +24,7 @@ public class HitBox extends Module {
 
     public HitBox() {
         super("HitBoxes", ModuleCategory.combat);
+        this.withDescription("Expands the hitboxes of entities.");
         this.registerSetting(new DescriptionSetting("Changed from multiplier to extra blocks!"));
         this.registerSetting(a = new SliderSetting("Extra Blocks", 0.2D, 0.05D, 2.0D, 0.05D));
         this.registerSetting(b = new TickSetting("Vertical", false));

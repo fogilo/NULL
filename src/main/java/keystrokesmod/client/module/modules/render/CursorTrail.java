@@ -21,6 +21,7 @@ public class CursorTrail extends Module {
 	//will implement new hud colors for this later
 	public CursorTrail() {
 		super("Cursor trail", ModuleCategory.render);
+        this.withDescription("Draws a trail behind your cursor in GUI.");
 		this.registerSetting(new DescriptionSetting("DO NOT USE"));
 		this.registerSetting(length = new SliderSetting("length (ms)", 200, 1, 1000, 1));
 	}

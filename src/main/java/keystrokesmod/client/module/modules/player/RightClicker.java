@@ -52,6 +52,7 @@ public class RightClicker extends Module {
 
     public RightClicker() {
         super("Right Clicker", ModuleCategory.player);
+        this.withDescription("Automatically clicks your right mouse button.");
 
         this.registerSetting(rightCPS = new DoubleSliderSetting("RightCPS", 12, 16, 1, 60, 0.5));
         this.registerSetting(jitterRight = new SliderSetting("Jitter right", 0.0D, 0.0D, 3.0D, 0.1D));

@@ -18,6 +18,7 @@ public class AutoBlock extends Module {
 
     public AutoBlock() {
         super("AutoBlock", ModuleCategory.combat);
+        this.withDescription("Automatically blocks attacks for you.");
 
         this.registerSetting(duration = new DoubleSliderSetting("Block duration (MS)", 20, 100, 1, 500, 1));
         this.registerSetting(distance = new DoubleSliderSetting("Distance to player (blocks)", 0, 3, 0, 6, 0.01));

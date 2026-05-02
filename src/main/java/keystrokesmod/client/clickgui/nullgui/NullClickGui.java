@@ -13,6 +13,7 @@ import org.lwjgl.opengl.GL11;
 import keystrokesmod.client.main.Raven;
 import keystrokesmod.client.module.Module;
 import keystrokesmod.client.module.Module.ModuleCategory;
+import keystrokesmod.client.module.modules.client.FontModule;
 import keystrokesmod.client.module.modules.client.GuiModule;
 import keystrokesmod.client.utils.CoolDown;
 import keystrokesmod.client.utils.RenderUtils;
@@ -53,6 +54,11 @@ public class NullClickGui extends GuiScreen {
     private int moduleScrollOffset = 0;
     private int sidebarScrollOffset = 0;
 
+    // Search
+    private String searchQuery = "";
+    private boolean isSearching = false;
+    private final List<Module> allModules = new ArrayList<Module>();
+
     private final CoolDown openAnim = new CoolDown(NullTheme.ANIM_OPEN_GUI);
 
     // Computed window bounds (recalculated each frame)
@@ -75,6 +81,11 @@ public class NullClickGui extends GuiScreen {
             if (cat == ModuleCategory.config) continue;
             if (!Raven.moduleManager.getModulesInCategory(cat).isEmpty())
                 categories.add(cat);
+            for (Module m : Raven.moduleManager.getModulesInCategory(cat)) {
+                if (m instanceof keystrokesmod.client.module.GuiModule && 
+                    ((keystrokesmod.client.module.GuiModule) m).getGuiCategory() == ModuleCategory.config) continue;
+                allModules.add(m);
+            }
         }
         if (!categories.isEmpty()) {
             activeCategory = categories.get(0);
@@ -94,6 +105,8 @@ public class NullClickGui extends GuiScreen {
         activeTab = FAVORITES_TAB;
         activeCategory = null;
         moduleScrollOffset = 0;
+        searchQuery = "";
+        isSearching = false;
         rebuildRows();
     }
 
@@ -101,12 +114,21 @@ public class NullClickGui extends GuiScreen {
         activeTab = cat.getName();
         activeCategory = cat;
         moduleScrollOffset = 0;
+        searchQuery = "";
+        isSearching = false;
         rebuildRows();
     }
 
     private void rebuildRows() {
         rows.clear();
-        if (FAVORITES_TAB.equals(activeTab)) {
+        if (!searchQuery.isEmpty()) {
+            String q = searchQuery.toLowerCase();
+            for (Module m : allModules) {
+                if (m.getName().toLowerCase().contains(q)) {
+                    rows.add(new NullModuleRow(m));
+                }
+            }
+        } else if (FAVORITES_TAB.equals(activeTab)) {
             for (ModuleCategory cat : categories) {
                 for (Module mod : Raven.moduleManager.getModulesInCategory(cat)) {
                     if (favorites.contains(mod.getName())) {
@@ -188,6 +210,9 @@ public class NullClickGui extends GuiScreen {
     public void drawScreen(int mx, int my, float partial) {
         super.drawScreen(mx, my, partial);
         computeWindowBounds();
+
+        // Tick FontModule to detect combo changes
+        try { FontModule.tick(); } catch (Exception ignored) {}
 
         // Delta Time calculation
         long now = System.currentTimeMillis();
@@ -347,9 +372,13 @@ public class NullClickGui extends GuiScreen {
 
         if (active) {
             RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_ACTIVE_BG);
+            RenderUtils.drawRoundedOutline(itemLeft, itemTop, itemRight, itemBottom, 6, 1.5f, NullTheme.ACCENT);
             RenderUtils.drawRoundedRect(itemLeft, itemTop + 5, itemLeft + 3, itemBottom - 5, 2, NullTheme.ACTIVE_INDICATOR);
         } else if (hover) {
             RenderUtils.drawRoundedRect(itemLeft, itemTop, itemRight, itemBottom, 6, NullTheme.CAT_HOVER);
+            RenderUtils.drawRoundedOutline(itemLeft, itemTop, itemRight, itemBottom, 6, 1.0f, 0x60FF8AC5); // stronger pink on hover
+        } else {
+            RenderUtils.drawRoundedOutline(itemLeft, itemTop, itemRight, itemBottom, 6, 1.0f, 0x30FF8AC5); // slight pink always
         }
 
         FontUtil.nullCategory.drawSmoothString(name, sbX + 16,
@@ -377,14 +406,25 @@ public class NullClickGui extends GuiScreen {
 
         // Category title — clean, minimal
         int headerY = winY + 22;
-        String title = FAVORITES_TAB.equals(activeTab) ? "Favorites" :
-                (activeCategory != null ? activeCategory.getName() : "");
-        FontUtil.nullTitle.drawSmoothString(title, panelX + 20, headerY, NullTheme.TEXT_PRIMARY);
 
-        String countLabel = rows.size() + " modules";
-        FontUtil.poppinsRegular.drawSmoothString(countLabel,
-                panelX + 20 + (float) FontUtil.nullTitle.getStringWidth(title) + 10,
-                headerY + 4, NullTheme.TEXT_SECONDARY);
+        if (searchQuery.isEmpty()) {
+            String title = FAVORITES_TAB.equals(activeTab) ? "Favorites" :
+                    (activeCategory != null ? activeCategory.getName() : "");
+            FontUtil.nullTitle.drawSmoothString(title, panelX + 20, headerY, NullTheme.TEXT_PRIMARY);
+
+            String countLabel = rows.size() + " modules";
+            FontUtil.poppinsRegular.drawSmoothString(countLabel,
+                    panelX + 20 + (float) FontUtil.nullTitle.getStringWidth(title) + 10,
+                    headerY + 4, NullTheme.TEXT_SECONDARY);
+        } else {
+            FontUtil.nullTitle.drawSmoothString("Search", panelX + 20, headerY, NullTheme.TEXT_PRIMARY);
+            String countLabel = rows.size() + " found";
+            FontUtil.poppinsRegular.drawSmoothString(countLabel,
+                    panelX + 20 + (float) FontUtil.nullTitle.getStringWidth("Search") + 10,
+                    headerY + 4, NullTheme.TEXT_SECONDARY);
+        }
+
+        drawSearchBar(panelX, panelW, headerY, mx, my);
 
         int contentStartY = headerY + 28;
 
@@ -403,12 +443,32 @@ public class NullClickGui extends GuiScreen {
         }
 
         // Empty favorites message
-        if (rows.isEmpty() && FAVORITES_TAB.equals(activeTab)) {
+        if (rows.isEmpty() && FAVORITES_TAB.equals(activeTab) && searchQuery.isEmpty()) {
             FontUtil.poppinsRegular.drawSmoothString("Click the star on any module to add it here.",
+                    rowX, contentStartY + 16, NullTheme.TEXT_SECONDARY);
+        } else if (rows.isEmpty() && !searchQuery.isEmpty()) {
+            FontUtil.poppinsRegular.drawSmoothString("No modules found for '" + searchQuery + "'.",
                     rowX, contentStartY + 16, NullTheme.TEXT_SECONDARY);
         }
 
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    private void drawSearchBar(int panelX, int panelW, int headerY, int mx, int my) {
+        int sbW = 110;
+        int sbH = 20;
+        int sbX = panelX + panelW - sbW - 20;
+        int sbY = headerY - 2;
+
+        boolean hoverSb = mx >= sbX && mx <= sbX + sbW && my >= sbY && my <= sbY + sbH;
+
+        int bgColor = isSearching ? NullTheme.CARD_EXPANDED : (hoverSb ? NullTheme.CARD_HOVER : 0x25FFFFFF);
+        RenderUtils.drawRoundedRect(sbX, sbY, sbX + sbW, sbY + sbH, 6, bgColor);
+        RenderUtils.drawRoundedOutline(sbX, sbY, sbX + sbW, sbY + sbH, 6, 1.5f, isSearching ? NullTheme.ACCENT : (hoverSb ? 0x90FFFFFF : 0x50FFFFFF));
+
+        String displayTxt = searchQuery.isEmpty() && !isSearching ? "Search..." : searchQuery + (isSearching && (System.currentTimeMillis() % 1000 < 500) ? "_" : "");
+        int txtColor = searchQuery.isEmpty() && !isSearching ? 0xFFAAAAAA : NullTheme.TEXT_PRIMARY;
+        FontUtil.poppinsRegular.drawSmoothString(displayTxt, sbX + 8, sbY + (sbH - FontUtil.poppinsRegular.getHeight()) / 2f, txtColor);
     }
 
     // ── INPUT: KEYBOARD ──────────────────────────────────────────
@@ -423,6 +483,7 @@ public class NullClickGui extends GuiScreen {
             if (!down) {
                 boundKeyReleased = true;
             } else if (boundKeyReleased) {
+                if (keystrokesmod.client.clickgui.nullgui.settings.NProfileCombo.isRenaming || isSearching) return;
                 closeGui();
                 return;
             }
@@ -434,8 +495,43 @@ public class NullClickGui extends GuiScreen {
 
     @Override
     public void keyTyped(char c, int key) throws IOException {
-        // Forward to setting components (e.g. keybind setting)
+        if (isSearching) {
+            if (key == Keyboard.KEY_ESCAPE) {
+                isSearching = false;
+                searchQuery = "";
+                moduleScrollOffset = 0;
+                rebuildRows();
+                return;
+            } else if (key == Keyboard.KEY_RETURN) {
+                isSearching = false;
+                return;
+            } else if (key == Keyboard.KEY_BACK) {
+                if (!searchQuery.isEmpty()) {
+                    searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+                    moduleScrollOffset = 0;
+                    rebuildRows();
+                }
+                return;
+            } else if (net.minecraft.util.ChatAllowedCharacters.isAllowedCharacter(c)) {
+                if (FontUtil.poppinsRegular.getStringWidth(searchQuery + c) < 140) {
+                    searchQuery += c;
+                    moduleScrollOffset = 0;
+                    rebuildRows();
+                }
+                return;
+            }
+            return; // Block other inputs while searching
+        }
+
+        // Forward to setting components (e.g. keybind setting or text inputs)
         rows.forEach(r -> r.keyTyped(c, key));
+
+        if (keystrokesmod.client.clickgui.nullgui.settings.NProfileCombo.isRenaming) {
+            return; // Block ESC, E, and any other GUI closing actions while typing
+        }
+        
+        Raven.profileManager.saveProfile();
+        if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
 
         // ESC and E always close
         if (key == Keyboard.KEY_ESCAPE || key == Keyboard.KEY_E) {
@@ -445,7 +541,7 @@ public class NullClickGui extends GuiScreen {
 
     private void closeGui() {
         Raven.mc.displayGuiScreen(null);
-        Raven.configManager.save();
+        Raven.profileManager.saveProfile();
         if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
     }
 
@@ -488,10 +584,30 @@ public class NullClickGui extends GuiScreen {
             return;
         }
 
+        // ── Search bar click ──
+        int panelX = winX + NullTheme.SIDEBAR_W + 1;
+        int panelW = winW - NullTheme.SIDEBAR_W - 1;
+        int searchW = 110;
+        int searchH = 20;
+        int searchX = panelX + panelW - searchW - 20;
+        int searchY = (winY + 22) - 2;
+        
+        if (mx >= searchX && mx <= searchX + searchW && my >= searchY && my <= searchY + searchH) {
+            isSearching = true;
+            return;
+        } else {
+            isSearching = false;
+        }
+
         // ── Module rows ──
+        int favSizeBefore = favorites.size();
         for (NullModuleRow row : rows) {
             if (row.mouseDown(mx, my, button)) {
-                onFavoriteChanged();
+                if (favorites.size() != favSizeBefore) {
+                    onFavoriteChanged();
+                }
+                Raven.profileManager.saveProfile();
+                if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
                 return;
             }
         }
@@ -500,6 +616,7 @@ public class NullClickGui extends GuiScreen {
     @Override
     public void mouseReleased(int mx, int my, int button) {
         rows.forEach(r -> r.mouseReleased(mx, my, button));
+        Raven.profileManager.saveProfile();
         if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
     }
 
@@ -544,7 +661,7 @@ public class NullClickGui extends GuiScreen {
     @Override
     public void onGuiClosed() {
         Raven.mc.gameSettings.guiScale = GuiModule.guiScale;
-        Raven.configManager.save();
+        Raven.profileManager.saveProfile();
         if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
     }
 

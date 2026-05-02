@@ -54,6 +54,7 @@ public class KillAura extends Module {
 
     public KillAura() {
         super("KillAura", ModuleCategory.combat);
+        this.withDescription("Automatically attacks entities around you.");
         this.registerSetting(new DescriptionSetting("Set targets in Client->Targets"));
         this.registerSetting(reach = new SliderSetting("Reach (Blocks)", 3.3, 3, 6, 0.05));
         this.registerSetting(rps = new SliderSetting("Max rotation speed", 36, 0, 200, 1));

@@ -22,6 +22,7 @@ public class GuiModule extends Module {
 
     public GuiModule() {
         super("Gui", ModuleCategory.client);
+        this.withDescription("Settings for the ClickGUI.");
         withKeycode(54);
 
         this.registerSetting(cleanUp = new TickSetting("Clean Up", false));
@@ -47,7 +48,7 @@ public class GuiModule extends Module {
             if (mc.currentScreen == Raven.nullGui) {
                 // Close the GUI
                 mc.displayGuiScreen(null);
-                Raven.configManager.save();
+                Raven.profileManager.saveProfile();
                 if (Raven.clientConfig != null) Raven.clientConfig.saveConfig();
             } else {
                 // Open the GUI — store bound key for debounce

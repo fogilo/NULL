@@ -12,6 +12,7 @@ public class Sprint extends Module {
 
     public Sprint() {
         super("Sprint", ModuleCategory.movement);
+        this.withDescription("Automatically sprints for you.");
         this.registerSetting(multiDir = new TickSetting("All Directions", false));
         this.registerSetting(ignoreBlindness = new TickSetting("Ignore Blindness", false));
     }

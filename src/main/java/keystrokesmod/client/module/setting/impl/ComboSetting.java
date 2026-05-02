@@ -82,6 +82,28 @@ public class ComboSetting<T extends Enum<?>> extends Setting {
         return options[currentOption.ordinal() == 0 ? options.length - 1 : currentOption.ordinal() - 1];
     }
 
+    /** @return total number of enum options */
+    public int getOptionsCount() {
+        return options.length;
+    }
+
+    /** @return display name for option at index */
+    public String getOptionName(int index) {
+        return options[index].toString();
+    }
+
+    /** @return ordinal index of the currently selected option */
+    public int getCurrentIndex() {
+        return currentOption.ordinal();
+    }
+
+    /** Set mode by ordinal index */
+    public void setModeByIndex(int index) {
+        if (index >= 0 && index < options.length) {
+            currentOption = options[index];
+        }
+    }
+
 	@Override
 	public Class<? extends KvComponent> getComponentType() {
 		return KvComboComponent.class;

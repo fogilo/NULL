@@ -3,8 +3,11 @@ package keystrokesmod.client.clickgui.nullgui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.lwjgl.opengl.GL11;
+
 import keystrokesmod.client.clickgui.nullgui.settings.NBind;
 import keystrokesmod.client.clickgui.nullgui.settings.NCombo;
+import keystrokesmod.client.clickgui.nullgui.settings.NProfileCombo;
 import keystrokesmod.client.clickgui.nullgui.settings.NDoubleSlider;
 import keystrokesmod.client.clickgui.nullgui.settings.NRgb;
 import keystrokesmod.client.clickgui.nullgui.settings.NSettingComponent;
@@ -13,6 +16,7 @@ import keystrokesmod.client.clickgui.nullgui.settings.NToggle;
 import keystrokesmod.client.module.Module;
 import keystrokesmod.client.module.setting.Setting;
 import keystrokesmod.client.module.setting.impl.ComboSetting;
+import keystrokesmod.client.module.setting.impl.ProfileComboSetting;
 import keystrokesmod.client.module.setting.impl.DoubleSliderSetting;
 import keystrokesmod.client.module.setting.impl.RGBSetting;
 import keystrokesmod.client.module.setting.impl.SliderSetting;
@@ -21,6 +25,7 @@ import keystrokesmod.client.utils.CoolDown;
 import keystrokesmod.client.utils.RenderUtils;
 import keystrokesmod.client.utils.Utils;
 import keystrokesmod.client.utils.font.FontUtil;
+import keystrokesmod.client.utils.font.FontRenderer;
 import net.minecraft.client.gui.Gui;
 
 /**
@@ -64,6 +69,7 @@ public class NullModuleRow {
         if (s instanceof TickSetting)         return new NToggle((TickSetting) s, mod);
         if (s instanceof SliderSetting)       return new NSlider((SliderSetting) s);
         if (s instanceof ComboSetting)        return new NCombo((ComboSetting<?>) s, mod);
+        if (s instanceof ProfileComboSetting) return new NProfileCombo((ProfileComboSetting) s, mod);
         if (s instanceof RGBSetting)          return new NRgb((RGBSetting) s);
         if (s instanceof DoubleSliderSetting) return new NDoubleSlider((DoubleSliderSetting) s);
         return null;
@@ -108,9 +114,15 @@ public class NullModuleRow {
         RenderUtils.drawRoundedRect(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, bgColor);
 
         // ── Ghost Border for the card ──
-        if (hoverHeader || expanded) {
+        if (expanded) {
             RenderUtils.drawRoundedOutline(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, 1,
-                    expanded ? NullTheme.GHOST_BORDER_STRONG : NullTheme.GHOST_BORDER);
+                    NullTheme.GHOST_BORDER_STRONG);
+        }
+
+        // ── HOVER OUTLINE — distinct purple stroke on the entire card bounding box ──
+        if (hoverHeader && !expanded) {
+            RenderUtils.drawRoundedOutline(x, y, x + width, y + cardH, NullTheme.CARD_RADIUS, 1.5f,
+                    NullTheme.HOVER_OUTLINE);
         }
 
         // ── Active Border Glow (Tracing) ──
@@ -138,27 +150,34 @@ public class NullModuleRow {
             RenderUtils.drawRoundedRect(x, barTop, x + 3, barBot, 2, NullTheme.ACCENT);
         }
 
-        // ── Module name ──
+        // ── Module name with dynamic text scaling (LARGE font for module names) ──
+        FontRenderer nameFont = FontUtil.guiDynamicLarge != null ? FontUtil.guiDynamicLarge : FontUtil.poppinsBold;
+        FontRenderer descFont = FontUtil.guiDynamicSmall != null ? FontUtil.guiDynamicSmall : FontUtil.poppinsRegular;
         int nameColor = mod.isEnabled() ? NullTheme.TEXT_ENABLED : NullTheme.TEXT_DISABLED;
-        float nameY = y + (NullTheme.CARD_HEIGHT - FontUtil.poppinsBold.getHeight()) / 2f;
-        FontUtil.poppinsBold.drawSmoothString(mod.getName(), x + 16, nameY, nameColor);
-
-        // ── Module description (inline, after name) ──
-        float nameW = (float) FontUtil.poppinsBold.getStringWidth(mod.getName());
-        String desc = mod.getDescription();
-        if (desc != null && !desc.isEmpty()) {
-            // Truncate description if it's too long to fit
-            int maxDescW = width - (int) nameW - 140; // reserve space for toggle + star + chevron
-            String truncDesc = desc;
-            if (FontUtil.poppinsRegular.getStringWidth(desc) > maxDescW && maxDescW > 20) {
-                while (FontUtil.poppinsRegular.getStringWidth(truncDesc + "...") > maxDescW && truncDesc.length() > 5) {
-                    truncDesc = truncDesc.substring(0, truncDesc.length() - 1);
-                }
-                truncDesc += "...";
-            }
-            FontUtil.poppinsRegular.drawSmoothString(truncDesc,
-                    x + 16 + nameW + 8, nameY + 2, NullTheme.TEXT_DESCRIPTION);
+        String name = mod.getName();
+        if (mod.getName().equalsIgnoreCase("Profiles") && keystrokesmod.client.main.Raven.profileManager != null) {
+            name = "Profiles: " + keystrokesmod.client.main.Raven.profileManager.getActiveProfile();
         }
+        float rawNameW = (float) nameFont.getStringWidth(name);
+        int maxNameW = width - 110; // space for toggle + star + chevron
+        float nameScale = 1.0f;
+        if (rawNameW > maxNameW && maxNameW > 10) {
+            nameScale = maxNameW / rawNameW;
+            if (nameScale < 0.55f) nameScale = 0.55f;
+        }
+        float nameY = y + (NullTheme.CARD_HEIGHT - nameFont.getHeight()) / 2f;
+        if (nameScale < 1.0f) {
+            GL11.glPushMatrix();
+            GL11.glTranslatef(x + 16, nameY, 0);
+            GL11.glScalef(nameScale, nameScale, 1.0f);
+            nameFont.drawSmoothString(name, 0, 0, nameColor);
+            GL11.glPopMatrix();
+        } else {
+            nameFont.drawSmoothString(name, x + 16, nameY, nameColor);
+        }
+        float nameW = rawNameW * nameScale;
+
+
 
         // ── Right-side controls (from right to left): Chevron → Star → Toggle ──
 
@@ -169,7 +188,9 @@ public class NullModuleRow {
         drawStar(mx, my);
 
         // 3. Toggle switch
-        drawToggle();
+        if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles")) {
+            drawToggle();
+        }
 
         // ── Expanded settings area ──
         if (expanded || getAnimPercent() < 1f) {
@@ -183,6 +204,17 @@ public class NullModuleRow {
             }
 
             int settingY = y + NullTheme.CARD_HEIGHT + 8;
+            
+            List<String> descLines = getWrappedDescription();
+            if (!descLines.isEmpty()) {
+                FontRenderer df = FontUtil.guiDynamicSmall != null ? FontUtil.guiDynamicSmall : FontUtil.poppinsRegular;
+                for (String line : descLines) {
+                    df.drawSmoothString(line, x + 16, settingY, NullTheme.TEXT_DESCRIPTION);
+                    settingY += df.getHeight() + 2;
+                }
+                settingY += 6;
+            }
+
             for (NSettingComponent comp : settings) {
                 if (!comp.visable) continue;
                 comp.setPosition(x + 16, settingY, width - 32);
@@ -356,12 +388,49 @@ public class NullModuleRow {
 
     private int computeSettingsHeight() {
         int h = 8; // top padding
+        
+        List<String> descLines = getWrappedDescription();
+        if (!descLines.isEmpty()) {
+            FontRenderer df = FontUtil.guiDynamicSmall != null ? FontUtil.guiDynamicSmall : FontUtil.poppinsRegular;
+            h += descLines.size() * (df.getHeight() + 2) + 6;
+        }
+
         for (NSettingComponent c : settings) {
             if (c.visable) h += c.getHeight() + 5;
         }
         if (bindRow != null) h += bindRow.getHeight() + 5;
         h += 6; // bottom padding
         return h;
+    }
+
+    private List<String> getWrappedDescription() {
+        List<String> lines = new ArrayList<>();
+        String desc = mod.getDescription();
+        if (desc == null || desc.isEmpty()) return lines;
+        
+        FontRenderer df = FontUtil.guiDynamicSmall != null ? FontUtil.guiDynamicSmall : FontUtil.poppinsRegular;
+        int maxW = width - 32;
+        
+        String[] words = desc.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+        
+        for (String word : words) {
+            if (currentLine.length() == 0) {
+                currentLine.append(word);
+            } else {
+                String testLine = currentLine.toString() + " " + word;
+                if (df.getStringWidth(testLine) <= maxW) {
+                    currentLine.append(" ").append(word);
+                } else {
+                    lines.add(currentLine.toString());
+                    currentLine = new StringBuilder(word);
+                }
+            }
+        }
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+        return lines;
     }
 
     private float getAnimPercent() {
@@ -396,10 +465,12 @@ public class NullModuleRow {
             int ty = y + (NullTheme.CARD_HEIGHT - NullTheme.TOGGLE_H) / 2;
             if (button == 0 && mx >= tx && mx <= tx + tw
                     && my >= ty && my <= ty + NullTheme.TOGGLE_H) {
-                toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
-                toggleAnim.start();
-                mod.toggle();
-                return true;
+                if (!mod.getName().equalsIgnoreCase("Font") && !mod.getName().equalsIgnoreCase("Profiles")) {
+                    toggleAnim.setCooldown(NullTheme.ANIM_TOGGLE);
+                    toggleAnim.start();
+                    mod.toggle();
+                    return true;
+                }
             }
 
             // ── Chevron click → expand/collapse ──

@@ -29,6 +29,11 @@ public class FontUtil {
     public static FontRenderer nullCategory;    // Space Grotesk Bold 13px — category names
     public static FontRenderer nullBody;        // Poppins 10px — small setting text
 
+    // Dynamic GUI font — set by FontModule, used for module names in the NULL GUI
+    public static FontRenderer guiDynamic;      // 14px bold — settings text (switchable)
+    public static FontRenderer guiDynamicSmall; // 11px plain — descriptions (switchable)
+    public static FontRenderer guiDynamicLarge; // 18px bold — module names only (switchable, distinctly larger)
+
     private static Font normal_;
     private static Font two_;
     private static Font small_;
@@ -44,12 +49,15 @@ public class FontUtil {
     private static Font nullCategory_;
     private static Font nullBody_;
 
+    // Shared cache so we don't reload the same .ttf file multiple times
+    private static final Map<String, Font> globalFontCache = new HashMap<>();
+
     private static Font getFont(Map<String, Font> locationMap, String location, int size, int fonttype) {
         Font font = null;
 
         try {
             if (locationMap.containsKey(location))
-                font = locationMap.get(location).deriveFont(Font.PLAIN, size);
+                font = locationMap.get(location).deriveFont(fonttype, size);
             else {
                 InputStream is = HUD.class.getResourceAsStream("/assets/raindots/fonts/" + location);
                 assert is != null;
@@ -87,6 +95,11 @@ public class FontUtil {
             nullTitle_      = getFont(locationMap, "SpaceGrotesk-Bold.ttf", 18, Font.BOLD);
             nullCategory_   = getFont(locationMap, "SpaceGrotesk-Bold.ttf", 13, Font.BOLD);
             nullBody_       = getFont(locationMap, "Poppins.ttf", 10, Font.PLAIN);
+
+            // Store into global cache for dynamic reload
+            synchronized (globalFontCache) {
+                globalFontCache.putAll(locationMap);
+            }
             completed++;
         }).start();
         new Thread(() -> {
@@ -120,5 +133,56 @@ public class FontUtil {
         nullTitle      = new FontRenderer(nullTitle_,      true, true);
         nullCategory   = new FontRenderer(nullCategory_,   true, true);
         nullBody       = new FontRenderer(nullBody_,       true, true);
+
+        // Default dynamic font = Poppins (matches original behavior)
+        guiDynamic      = new FontRenderer(poppinsBold_,    true, true);
+        guiDynamicSmall = new FontRenderer(poppinsRegular_, true, true);
+        guiDynamicLarge = new FontRenderer(poppinsBold_.deriveFont(Font.BOLD, 18f), true, true);
+    }
+
+    /**
+     * Rebuild the dynamic GUI fonts from a different .ttf file.
+     * Called by FontModule when the user switches fonts.
+     * Thread-safe — runs on the calling thread (GUI thread).
+     */
+    public static void rebuildGuiFonts(String fontFileName) {
+        try {
+            Font baseFont;
+            synchronized (globalFontCache) {
+                baseFont = globalFontCache.get(fontFileName);
+            }
+            if (baseFont == null) {
+                // Load it for the first time
+                InputStream is = HUD.class.getResourceAsStream("/assets/raindots/fonts/" + fontFileName);
+                if (is == null) {
+                    System.err.println("[FontUtil] Font not found: " + fontFileName);
+                    return;
+                }
+                baseFont = Font.createFont(Font.TRUETYPE_FONT, is);
+                synchronized (globalFontCache) {
+                    globalFontCache.put(fontFileName, baseFont);
+                }
+            }
+
+            Font boldFont  = baseFont.deriveFont(Font.BOLD, 14);
+            Font plainFont = baseFont.deriveFont(Font.PLAIN, 11);
+            Font largeFont = baseFont.deriveFont(Font.BOLD, 18);
+
+            guiDynamic      = new FontRenderer(boldFont,  true, true);
+            guiDynamicSmall = new FontRenderer(plainFont, true, true);
+            guiDynamicLarge = new FontRenderer(largeFont, true, true);
+
+            // Also update poppinsBold and poppinsRegular so settings text matches
+            poppinsBold    = new FontRenderer(boldFont, true, true);
+            poppinsRegular = new FontRenderer(plainFont, true, true);
+            poppinsMedium  = new FontRenderer(baseFont.deriveFont(Font.PLAIN, 13), true, true);
+
+            // Update sidebar category font
+            nullCategory = new FontRenderer(baseFont.deriveFont(Font.BOLD, 13), true, true);
+
+        } catch (Exception e) {
+            System.err.println("[FontUtil] Failed to rebuild GUI fonts: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

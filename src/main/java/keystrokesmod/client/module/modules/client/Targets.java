@@ -30,6 +30,7 @@ public class Targets extends Module {
 
     public Targets() {
         super("Targets", ModuleCategory.client);
+        this.withDescription("Configure target priorities and filters.");
         this.registerSettings(
                         friends = new TickSetting("Target friends", false),
                         teams = new TickSetting("Target teammates", false),

@@ -12,7 +12,7 @@ import keystrokesmod.client.clickgui.kv.KvCompactGui;
 import keystrokesmod.client.clickgui.nullgui.NullClickGui;
 import keystrokesmod.client.clickgui.raven.ClickGui;
 import keystrokesmod.client.command.CommandManager;
-import keystrokesmod.client.config.ConfigManager;
+import keystrokesmod.client.profile.ProfileManager;
 import keystrokesmod.client.event.forge.ForgeEventListener;
 import keystrokesmod.client.module.ModuleManager;
 import keystrokesmod.client.notifications.NotificationRenderer;
@@ -86,7 +86,7 @@ public class Raven {
             "Enter the command update into client CommandLine to open the download page",
             "or just enable the update module to get a message in chat.", "",
             "Newest version: " + versionManager.getLatestVersion().toString() };
-    public static ConfigManager configManager;
+    public static ProfileManager profileManager;
     public static ClientConfig clientConfig;
 
     public static final ModuleManager moduleManager = new ModuleManager();
@@ -130,7 +130,7 @@ public class Raven {
         kvCompactGui = new KvCompactGui();
         appleGui = new AppleClickGui();
         nullGui = new NullClickGui();
-        configManager = new ConfigManager();
+        profileManager = new ProfileManager();
         clientConfig = new ClientConfig();
         clientConfig.applyConfig();
 

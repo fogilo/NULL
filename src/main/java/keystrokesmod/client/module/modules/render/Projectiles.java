@@ -20,6 +20,7 @@ public class Projectiles extends Module {
 
     public Projectiles() {
         super("Projectiles", ModuleCategory.render);
+        this.withDescription("Shows the predicted path of projectiles.");
         this.registerSetting(w = new SliderSetting("Thickness", 2.0D, 1.0D, 10.0D, 1.0D));
     }
 

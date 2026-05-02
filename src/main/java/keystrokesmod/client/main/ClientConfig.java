@@ -8,10 +8,13 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
+import keystrokesmod.client.clickgui.nullgui.NullClickGui;
 import keystrokesmod.client.clickgui.raven.components.CategoryComponent;
 import keystrokesmod.client.module.GuiModule;
 import keystrokesmod.client.module.Module;
@@ -57,9 +60,13 @@ public class ClientConfig {
             Utils.URLS.hypixelApiKey = config.get("apikey").getAsString();
             Utils.URLS.pasteApiKey = config.get("pastekey").getAsString();
             loadClickGuiCoords(config.get("clickgui").getAsJsonObject().get("catPos").getAsJsonObject());
-            Raven.configManager.loadConfigByName(config.get("currentconfig").getAsString());
+            Raven.profileManager.loadProfileByName(config.get("currentconfig").getAsString());
             loadHudCoords(config.get("hud").getAsJsonObject());
             loadModules(config.get("modules").getAsJsonObject());
+            // Load favorites
+            if (config.has("favorites")) {
+                loadFavorites(config.get("favorites").getAsJsonArray());
+            }
         } catch (final Exception e) {
             e.printStackTrace();
         }
@@ -104,11 +111,12 @@ public class ClientConfig {
 
         data.addProperty("apikey", Utils.URLS.hypixelApiKey);
         data.addProperty("pastekey", Utils.URLS.pasteApiKey);
-        data.addProperty("currentconfig", Raven.configManager.getConfig().getName());
+        data.addProperty("currentconfig", Raven.profileManager.getActiveProfile());
         data.add("keystrokes", getKeystrokeAsJson());
         data.add("hud", getHudAsJson());
         data.add("clickgui", getClickGuiAsJson());
         data.add("modules", getModulesAsJson());
+        data.add("favorites", getFavoritesAsJson());
 
         return data;
     }
@@ -165,6 +173,21 @@ public class ClientConfig {
                 module.applyConfigFromJson(data.get(module.getName()).getAsJsonObject());
             else
                 module.resetToDefaults();
+    }
+
+    private JsonArray getFavoritesAsJson() {
+        JsonArray arr = new JsonArray();
+        for (String name : NullClickGui.favorites) {
+            arr.add(new com.google.gson.JsonPrimitive(name));
+        }
+        return arr;
+    }
+
+    private void loadFavorites(JsonArray arr) {
+        NullClickGui.favorites.clear();
+        for (JsonElement el : arr) {
+            NullClickGui.favorites.add(el.getAsString());
+        }
     }
 
     public void saveConfig() {

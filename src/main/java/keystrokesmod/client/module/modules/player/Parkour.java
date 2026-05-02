@@ -14,6 +14,7 @@ public class Parkour extends Module {
 
     public Parkour() {
         super("Parkour", ModuleCategory.player);
+        this.withDescription("Automatically jumps at the edge of blocks.");
     }
 
     @Subscribe

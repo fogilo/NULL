@@ -25,6 +25,7 @@ public class Nametags extends Module {
 
     public Nametags() {
         super("Nametags", ModuleCategory.render);
+        this.withDescription("Renders larger nametags with health and armor.");
         this.registerSetting(a = new SliderSetting("Offset", 0.0D, -40.0D, 40.0D, 1.0D));
         this.registerSetting(b = new TickSetting("Rect", true));
         this.registerSetting(c = new TickSetting("Show health", true));

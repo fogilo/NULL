@@ -76,7 +76,7 @@ dependencies {
     embed 'org.ow2.asm:asm-commons:9.2'
     embed 'org.ow2.asm:asm-tree:9.2'
     embed 'org.ow2.asm:asm-util:9.2'
-    embed 'com.google.guava:guava:31.1-jre'
+    embed 'com.google.guava:guava:25.1-jre'
     
     implementation 'org.jetbrains:annotations:22.0.0'
 }

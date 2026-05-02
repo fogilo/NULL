@@ -32,6 +32,7 @@ public class BlockHit extends Module {
 
     public BlockHit() {
         super("BlockHit", ModuleCategory.combat);
+        this.withDescription("Automatically blocks your sword when attacking.");
 
         this.registerSetting(onlyPlayers = new TickSetting("Only combo players", true));
         this.registerSetting(onlyForward = new TickSetting("Only blockhit when walking forward", false));

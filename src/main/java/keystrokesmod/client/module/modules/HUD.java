@@ -40,6 +40,7 @@ public class HUD extends Module {
 
     public HUD() {
         super("HUD", ModuleCategory.render);
+        this.withDescription("Heads up display settings.");
         this.registerSetting(editPosition = new TickSetting("Edit position", false));
         this.registerSetting(dropShadow = new TickSetting("Drop shadow", true));
         showedError = false;

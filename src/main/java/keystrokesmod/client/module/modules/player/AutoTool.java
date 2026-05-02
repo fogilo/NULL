@@ -33,6 +33,7 @@ public class AutoTool extends Module {
 
     public AutoTool() {
         super("Auto Tool", ModuleCategory.player);
+        this.withDescription("Automatically switches to the best tool.");
 
         this.registerSetting(hotkeyBack = new TickSetting("Hotkey back", true));
         this.registerSetting(mineDelay = new DoubleSliderSetting("Max delay", 10, 50, 0, 2000, 1));

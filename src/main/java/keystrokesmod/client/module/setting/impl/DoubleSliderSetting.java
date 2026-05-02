@@ -65,8 +65,8 @@ public class DoubleSliderSetting extends Setting {
         if (!data.get("type").getAsString().equals(getSettingType()))
             return;
 
-        setValueMax(data.get("valueMax").getAsDouble());
-        setValueMin(data.get("valueMin").getAsDouble());
+        this.valMax = data.get("valueMax").getAsDouble();
+        this.valMin = data.get("valueMin").getAsDouble();
     }
 
     @Override

@@ -25,6 +25,7 @@ public class WaterBucket extends Module {
 
     public WaterBucket() {
         super("Water bucket", ModuleCategory.other);
+        this.withDescription("Automatically places a water bucket to prevent fall damage.");
         this.registerSetting(moduleDesc = new DescriptionSetting("Credits: aycy"));
         this.registerSetting(moduleDesc = new DescriptionSetting("Disabled in the Nether"));
         this.registerSetting(distance = new SliderSetting("Fall Distance", 3, 1, 10, 0.1));

@@ -40,6 +40,7 @@ public class AimAssist extends Module {
 
     public AimAssist() {
         super("AimAssist", ModuleCategory.combat);
+        this.withDescription("Smoothly aims at targets for you.");
         this.registerSetting(new DescriptionSetting("Set targets in Client->Targets"));
         this.registerSetting(speedYaw = new SliderSetting("Speed 1 (yaw)", 45.0D, 5.0D, 100.0D, 1.0D));
         this.registerSetting(complimentYaw = new SliderSetting("Speed 2 (yaw)", 15.0D, 2D, 97.0D, 1.0D));

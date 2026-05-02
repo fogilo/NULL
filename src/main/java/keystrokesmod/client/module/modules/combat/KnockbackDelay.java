@@ -76,6 +76,7 @@ public class KnockbackDelay extends Module {
 
     public KnockbackDelay() {
         super("KnockbackDelay", ModuleCategory.combat);
+        this.withDescription("Delays knockback for smoother combat.");
         this.registerSetting(airDelay    = new SliderSetting("Air Delay (ms)",    150, 0, 500, 5));
         this.registerSetting(groundDelay = new SliderSetting("Ground Delay (ms)", 100, 0, 500, 5));
         this.registerSetting(chance      = new SliderSetting("Chance (%)",         80, 0, 100, 1));

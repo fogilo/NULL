@@ -16,6 +16,7 @@ public class SpeedTest extends Module {
     
     public SpeedTest() {
         super("SpeedTest", ModuleCategory.movement);
+        this.withDescription("A movement testing module.");
         this.registerSetting(delay = new SliderSetting("Delay", 20, 0, 300 ,1));
         this.registerSetting(stopPercent = new SliderSetting("Stop Percent", 0, 0, 200 ,1));
     }

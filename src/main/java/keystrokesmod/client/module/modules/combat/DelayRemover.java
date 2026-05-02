@@ -17,6 +17,7 @@ public class DelayRemover extends Module {
 
     public DelayRemover() {
         super("Delay Remover", ModuleCategory.combat);
+        this.withDescription("Removes the 1.8 hit delay.");
         withEnabled(true);
 
         this.registerSetting(desc = new DescriptionSetting("Gives you 1.7 hitreg."));

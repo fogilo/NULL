@@ -22,6 +22,7 @@ public class ChestESP extends Module {
 
     public ChestESP() {
         super("ChestESP", ModuleCategory.render);
+        this.withDescription("Renders chests through walls.");
         a = new SliderSetting("Red", 0.0D, 0.0D, 255.0D, 1.0D);
         b = new SliderSetting("Green", 0.0D, 0.0D, 255.0D, 1.0D);
         c = new SliderSetting("Blue", 255.0D, 0.0D, 255.0D, 1.0D);
